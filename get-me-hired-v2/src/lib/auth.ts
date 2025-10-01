@@ -1,35 +1,70 @@
-// Temporary auth helper - will be replaced with Supabase Auth
-
-const AUTH_KEY = "temp_auth";
-
-// Dummy credentials for development/testing only - NOT real secrets
-// These are intentional placeholder values that will be removed when Supabase Auth is implemented
-export const DUMMY_CREDENTIALS = {
-  email: "demo@getmehired.com", // ggignore
-  password: "demo123", // ggignore
-};
+import { supabase } from './supabase';
 
 export const authHelpers = {
   // Check if user is authenticated
-  isAuthenticated: (): boolean => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(AUTH_KEY) === "true";
+  isAuthenticated: async (): Promise<boolean> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
   },
 
-  // Login with dummy credentials
-  login: (email: string, password: string): boolean => {
-    if (
-      email === DUMMY_CREDENTIALS.email &&
-      password === DUMMY_CREDENTIALS.password
-    ) {
-      localStorage.setItem(AUTH_KEY, "true");
-      return true;
-    }
-    return false;
+  // Get current user
+  getCurrentUser: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  },
+
+  // Get current session
+  getSession: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  },
+
+  // Sign up with email and password
+  signUp: async (email: string, password: string, fullName: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+      },
+    });
+
+    return { data, error };
+  },
+
+  // Login with email and password
+  login: async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    return { data, error };
+  },
+
+  // Login with Google OAuth
+  loginWithGoogle: async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    return { data, error };
   },
 
   // Logout
-  logout: () => {
-    localStorage.removeItem(AUTH_KEY);
+  logout: async () => {
+    const { error } = await supabase.auth.signOut();
+    return { error };
+  },
+
+  // Listen to auth state changes
+  onAuthStateChange: (callback: (event: string, session: any) => void) => {
+    return supabase.auth.onAuthStateChange(callback);
   },
 };

@@ -7,9 +7,9 @@ import { FileText, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { authHelpers, DUMMY_CREDENTIALS } from "@/lib/auth";
+import { authHelpers } from "@/lib/auth";
+import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,34 +18,66 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const success = authHelpers.login(email, password);
+    try {
+      const { data, error: authError } = await authHelpers.login(email, password);
 
-      if (success) {
-        // TODO: Implement "Keep me logged in" persistence with Supabase
-        // For now, keepLoggedIn state is tracked but not persisted
-        console.log("Keep logged in:", keepLoggedIn);
+      if (authError) {
+        setError(authError.message || "Invalid email or password");
+        setIsLoading(false);
+        return;
+      }
 
-        // Redirect to dashboard on successful login
+      if (data.session) {
+        // Successfully logged in - session automatically persists
         router.push("/dashboard");
-      } else {
-        setError("Invalid credentials. Try demo@getmehired.com / demo123");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const { error: authError } = await authHelpers.loginWithGoogle();
+
+      if (authError) {
+        setError(authError.message || "Failed to login with Google");
         setIsLoading(false);
       }
-    }, 500);
+      // OAuth will redirect automatically, no need to handle success here
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-2xl relative">
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 -z-10">
+        <ThemedPrismaticBurst
+          animationType="rotate3d"
+          intensity={1.8}
+          speed={0.3}
+          distort={1.2}
+          rayCount={24}
+          mixBlendMode="lighten"
+          lightColors={['#60a5fa', '#a78bfa', '#22d3ee']}
+          darkColors={['#4d3dff', '#ff007a', '#00d4ff']}
+        />
+      </div>
+
+      <Card className="w-full max-w-2xl relative z-10">
         {/* Back Button */}
         <div className="absolute top-4 left-4 z-10">
           <Button variant="ghost" size="sm" asChild>
@@ -133,21 +165,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Keep Me Logged In */}
-            <div className="flex items-center justify-center space-x-2">
-              <Checkbox
-                id="keepLoggedIn"
-                checked={keepLoggedIn}
-                onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
-              />
-              <label
-                htmlFor="keepLoggedIn"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                Keep me logged in
-              </label>
-            </div>
-
             {/* Submit Button */}
             <Button type="submit" className="w-full gap-2 cursor-pointer" disabled={isLoading}>
               {isLoading ? (
@@ -175,7 +192,7 @@ export default function LoginPage() {
 
           {/* OAuth Buttons */}
           <div className="grid gap-2">
-            <Button variant="outline" type="button" className="cursor-pointer" disabled={isLoading}>
+            <Button variant="outline" type="button" className="cursor-pointer" disabled={isLoading} onClick={handleGoogleLogin}>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

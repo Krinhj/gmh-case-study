@@ -23,8 +23,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handleLogout = () => {
-    authHelpers.logout();
+  const handleLogout = async () => {
+    await authHelpers.logout();
     router.push("/auth/login");
   };
 

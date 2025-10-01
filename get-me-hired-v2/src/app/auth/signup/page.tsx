@@ -1,47 +1,99 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { FileText, Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authHelpers } from "@/lib/auth";
+import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordError("");
+    setError("");
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      setError("Passwords do not match");
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
       return;
     }
 
     setIsLoading(true);
 
-    // TODO: Implement Supabase signup
-    console.log("Signing up:", { email, password, fullName });
+    try {
+      const { data, error: authError } = await authHelpers.signUp(email, password, fullName);
 
-    // Simulate API call
-    setTimeout(() => {
+      if (authError) {
+        setError(authError.message || "Failed to create account");
+        setIsLoading(false);
+        return;
+      }
+
+      // Show success message (email confirmation required)
+      setSuccess(true);
       setIsLoading(false);
-    }, 1000);
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const { error: authError } = await authHelpers.loginWithGoogle();
+
+      if (authError) {
+        setError(authError.message || "Failed to sign up with Google");
+        setIsLoading(false);
+      }
+      // OAuth will redirect automatically
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-2xl relative">
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 -z-10">
+        <ThemedPrismaticBurst
+          animationType="rotate3d"
+          intensity={1.8}
+          speed={0.3}
+          distort={1.2}
+          rayCount={24}
+          mixBlendMode="lighten"
+          lightColors={['#60a5fa', '#a78bfa', '#22d3ee']}
+          darkColors={['#4d3dff', '#ff007a', '#00d4ff']}
+        />
+      </div>
+
+      <Card className="w-full max-w-2xl relative z-10">
         {/* Back Button */}
         <div className="absolute top-4 left-4 z-10">
           <Button variant="ghost" size="sm" asChild>
@@ -61,14 +113,73 @@ export default function SignUpPage() {
             <h1 className="text-2xl font-bold">GetMeHired</h1>
           </div>
 
-          {/* Form Header */}
-          <div className="text-center space-y-2 mb-8">
-            <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-            <CardDescription>
-              Enter your information to get started with AI-powered résumés
-            </CardDescription>
-          </div>
-          <form onSubmit={handleSignUp} className="space-y-6">
+          {/* Form Header - Only show when not success */}
+          {!success && (
+            <div className="text-center space-y-2 mb-8">
+              <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+              <CardDescription>
+                Enter your information to get started with AI-powered résumés
+              </CardDescription>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {success ? (
+            <div className="space-y-6">
+              {/* Icon and Success Header */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                  <MailCheck className="h-10 w-10 text-green-600 dark:text-green-500" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold">Check your email</h2>
+                  <p className="text-muted-foreground">
+                    We've sent a confirmation link to
+                  </p>
+                  <p className="font-medium text-foreground">{email}</p>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-muted/50 border rounded-lg p-4 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Next steps:</span>
+                </p>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>Open the email from GetMeHired</li>
+                  <li>Click the confirmation link</li>
+                  <li>Return to login with your credentials</li>
+                </ol>
+              </div>
+
+              {/* Additional Info */}
+              <div className="text-center space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Didn't receive the email? Check your spam folder or{" "}
+                  <button
+                    className="text-primary hover:underline font-medium"
+                    onClick={() => setSuccess(false)}
+                  >
+                    try again
+                  </button>
+                </p>
+                <Button className="w-full cursor-pointer" variant="default" asChild>
+                  <Link href="/auth/login">
+                    Go to Login
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <form onSubmit={handleSignUp} className="space-y-6">
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded">
+                    {error}
+                  </div>
+                )}
             {/* Name and Email - Side by Side */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -162,9 +273,6 @@ export default function SignUpPage() {
                     )}
                   </button>
                 </div>
-                {passwordError && (
-                  <p className="text-xs text-destructive">{passwordError}</p>
-                )}
               </div>
             </div>
 
@@ -195,7 +303,7 @@ export default function SignUpPage() {
 
           {/* OAuth Buttons */}
           <div className="grid gap-2">
-            <Button variant="outline" type="button" disabled={isLoading}>
+            <Button variant="outline" type="button" className="cursor-pointer" disabled={isLoading} onClick={handleGoogleSignUp}>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -226,17 +334,19 @@ export default function SignUpPage() {
             </Link>
           </p>
 
-          {/* Terms */}
-          <p className="text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link href="#" className="underline hover:text-foreground">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="#" className="underline hover:text-foreground">
-              Privacy Policy
-            </Link>
-          </p>
+              {/* Terms */}
+              <p className="text-center text-xs text-muted-foreground">
+                By creating an account, you agree to our{" "}
+                <Link href="#" className="underline hover:text-foreground">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="#" className="underline hover:text-foreground">
+                  Privacy Policy
+                </Link>
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

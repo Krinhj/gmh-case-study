@@ -15,11 +15,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Check authentication
-    if (!authHelpers.isAuthenticated()) {
-      router.push("/auth/login");
-    } else {
-      setIsLoading(false);
-    }
+    const checkAuth = async () => {
+      const isAuth = await authHelpers.isAuthenticated();
+      if (!isAuth) {
+        router.push("/auth/login");
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   if (isLoading) {
