@@ -2,10 +2,11 @@
 
 const AUTH_KEY = "temp_auth";
 
-// Dummy credentials
+// Dummy credentials for development/testing only - NOT real secrets
+// These are intentional placeholder values that will be removed when Supabase Auth is implemented
 export const DUMMY_CREDENTIALS = {
-  email: "demo@getmehired.com",
-  password: "demo123",
+  email: "demo@getmehired.com", // ggignore
+  password: "demo123", // ggignore
 };
 
 export const authHelpers = {
