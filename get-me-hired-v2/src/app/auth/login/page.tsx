@@ -1,29 +1,46 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
+import { FileText, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authHelpers, DUMMY_CREDENTIALS } from "@/lib/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
 
-    // TODO: Implement Supabase login
-    console.log("Logging in:", { email, password });
-
-    // Simulate API call
+    // Simulate API call delay
     setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+      const success = authHelpers.login(email, password);
+
+      if (success) {
+        // TODO: Implement "Keep me logged in" persistence with Supabase
+        // For now, keepLoggedIn state is tracked but not persisted
+        console.log("Keep logged in:", keepLoggedIn);
+
+        // Redirect to dashboard on successful login
+        router.push("/dashboard");
+      } else {
+        setError("Invalid credentials. Try demo@getmehired.com / demo123");
+        setIsLoading(false);
+      }
+    }, 500);
   };
 
   return (
@@ -56,6 +73,12 @@ export default function LoginPage() {
             </CardDescription>
           </div>
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded">
+                {error}
+              </div>
+            )}
             {/* Email and Password - Side by Side */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -81,26 +104,52 @@ export default function LoginPage() {
                     href="/auth/forgot-password"
                     className="text-xs text-primary hover:underline"
                   >
-                    Forgot?
+                    Forgot Password?
                   </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 cursor-pointer" />
+                    ) : (
+                      <Eye className="h-4 w-4 cursor-pointer" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
 
+            {/* Keep Me Logged In */}
+            <div className="flex items-center justify-center space-x-2">
+              <Checkbox
+                id="keepLoggedIn"
+                checked={keepLoggedIn}
+                onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
+              />
+              <label
+                htmlFor="keepLoggedIn"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Keep me logged in
+              </label>
+            </div>
+
             {/* Submit Button */}
-            <Button type="submit" className="w-full gap-2" disabled={isLoading}>
+            <Button type="submit" className="w-full gap-2 cursor-pointer" disabled={isLoading}>
               {isLoading ? (
                 "Logging in..."
               ) : (
@@ -126,7 +175,7 @@ export default function LoginPage() {
 
           {/* OAuth Buttons */}
           <div className="grid gap-2">
-            <Button variant="outline" type="button" disabled={isLoading}>
+            <Button variant="outline" type="button" className="cursor-pointer" disabled={isLoading}>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
