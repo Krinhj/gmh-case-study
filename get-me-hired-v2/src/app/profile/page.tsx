@@ -53,12 +53,17 @@ export default function ProfilePage() {
   // Load profile from context cache
   useEffect(() => {
     const loadUser = async () => {
-      const user = await authHelpers.getCurrentUser();
-      if (!user) {
+      try {
+        const user = await authHelpers.getCurrentUser();
+        if (!user) {
+          router.push("/auth/login");
+          return;
+        }
+        setUserId(user.id);
+      } catch (error) {
+        console.error("Auth error:", error);
         router.push("/auth/login");
-        return;
       }
-      setUserId(user.id);
     };
 
     loadUser();

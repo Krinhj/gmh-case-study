@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { FileText, LayoutDashboard, Briefcase, Sparkles, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
 
 const navItems = [
@@ -23,8 +24,13 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
     await authHelpers.logout();
     router.push("/auth/login");
   };
@@ -100,13 +106,25 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           className={`w-full gap-3 text-muted-foreground hover:text-foreground cursor-pointer ${
             isCollapsed ? "justify-center px-2" : "justify-start"
           }`}
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
           title={isCollapsed ? "Logout" : undefined}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && <span>Logout</span>}
         </Button>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onOpenChange={setLogoutConfirmOpen}
+        onConfirm={handleLogoutConfirm}
+        title="Logout"
+        description="Are you sure you want to logout? You will need to sign in again to access your account."
+        confirmText="Logout"
+        cancelText="Cancel"
+        variant="default"
+      />
     </aside>
   );
 }
