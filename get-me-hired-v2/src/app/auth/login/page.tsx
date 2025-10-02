@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authHelpers } from "@/lib/auth";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
 
 export default function LoginPage() {
@@ -33,9 +35,15 @@ export default function LoginPage() {
         return;
       }
 
-      if (data.session) {
-        // Successfully logged in - session automatically persists
-        router.push("/dashboard");
+      if (data.session && data.user) {
+        // Successfully logged in - check if onboarding completed
+        const completedOnboarding = await hasCompletedOnboarding(data.user.id);
+
+        if (completedOnboarding) {
+          router.push("/dashboard");
+        } else {
+          router.push("/onboarding");
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -91,9 +99,13 @@ export default function LoginPage() {
         <CardContent className="p-8 lg:p-12">
           {/* Logo & Branding - Centered */}
           <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <FileText className="h-9 w-9" />
-            </div>
+            <Image
+              src="/getmehired.svg"
+              alt="GetMeHired Logo"
+              width={64}
+              height={64}
+              className="h-16 w-16"
+            />
             <h1 className="text-2xl font-bold">GetMeHired</h1>
           </div>
 

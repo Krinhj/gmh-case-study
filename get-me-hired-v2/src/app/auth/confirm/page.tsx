@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, CheckCircle2, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
@@ -27,9 +28,13 @@ export default function ConfirmEmailPage() {
         <CardContent className="p-8 lg:p-12">
           {/* Logo & Branding - Centered */}
           <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <FileText className="h-9 w-9" />
-            </div>
+            <Image
+              src="/getmehired.svg"
+              alt="GetMeHired Logo"
+              width={64}
+              height={64}
+              className="h-16 w-16"
+            />
             <h1 className="text-2xl font-bold">GetMeHired</h1>
           </div>
 

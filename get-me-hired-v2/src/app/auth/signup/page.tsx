@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FileText, Mail, Lock, User, ArrowRight, ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,7 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      const { data, error: authError } = await authHelpers.signUp(email, password, fullName);
+      const { data, error: authError } = await authHelpers.signUp(email, password, "");
 
       if (authError) {
         setError(authError.message || "Failed to create account");
@@ -104,20 +104,24 @@ export default function SignUpPage() {
           </Button>
         </div>
 
-        <CardContent className="p-8 lg:p-12">
+        <CardContent className="p-6 lg:p-8">
           {/* Logo & Branding - Centered */}
-          <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <FileText className="h-9 w-9" />
-            </div>
-            <h1 className="text-2xl font-bold">GetMeHired</h1>
+          <div className="flex flex-col items-center gap-3 mb-6">
+            <Image
+              src="/getmehired.svg"
+              alt="GetMeHired Logo"
+              width={48}
+              height={48}
+              className="h-12 w-12"
+            />
+            <h1 className="text-xl font-bold">GetMeHired</h1>
           </div>
 
           {/* Form Header - Only show when not success */}
           {!success && (
-            <div className="text-center space-y-2 mb-8">
-              <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-              <CardDescription>
+            <div className="text-center space-y-1.5 mb-6">
+              <CardTitle className="text-xl font-bold">Create an account</CardTitle>
+              <CardDescription className="text-sm">
                 Enter your information to get started with AI-powered résumés
               </CardDescription>
             </div>
@@ -173,106 +177,87 @@ export default function SignUpPage() {
             </div>
           ) : (
             <>
-              <form onSubmit={handleSignUp} className="space-y-6">
+              <form onSubmit={handleSignUp} className="space-y-4">
                 {/* Error Message */}
                 {error && (
-                  <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded">
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-2.5 rounded">
                     {error}
                   </div>
                 )}
-            {/* Name and Email - Side by Side */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
               </div>
             </div>
 
-            {/* Password and Confirm Password - Side by Side */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  At least 6 characters
-                </p>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                At least 6 characters
+              </p>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -290,7 +275,7 @@ export default function SignUpPage() {
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -327,7 +312,7 @@ export default function SignUpPage() {
           </div>
 
           {/* Login Link */}
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/auth/login" className="font-semibold text-primary hover:underline">
               Log in
@@ -335,7 +320,7 @@ export default function SignUpPage() {
           </p>
 
               {/* Terms */}
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="mt-3 text-center text-xs text-muted-foreground">
                 By creating an account, you agree to our{" "}
                 <Link href="#" className="underline hover:text-foreground">
                   Terms of Service

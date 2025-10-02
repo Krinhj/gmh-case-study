@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { FileText, LayoutDashboard, Briefcase, Sparkles, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,13 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           onClick={toggleSidebar}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer w-full"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground flex-shrink-0">
-            <FileText className="h-6 w-6" />
-          </div>
+          <Image
+            src="/getmehired.svg"
+            alt="GetMeHired Logo"
+            width={40}
+            height={40}
+            className="h-10 w-10 flex-shrink-0"
+          />
           {!isCollapsed && <span className="text-xl font-bold">GetMeHired</span>}
         </button>
       </div>
