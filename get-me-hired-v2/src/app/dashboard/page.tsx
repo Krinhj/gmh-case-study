@@ -15,11 +15,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Check authentication
-    if (!authHelpers.isAuthenticated()) {
-      router.push("/auth/login");
-    } else {
-      setIsLoading(false);
-    }
+    const checkAuth = async () => {
+      try {
+        const isAuth = await authHelpers.isAuthenticated();
+        if (!isAuth) {
+          router.push("/auth/login");
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+        // If auth check fails, redirect to login
+        router.push("/auth/login");
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   if (isLoading) {
