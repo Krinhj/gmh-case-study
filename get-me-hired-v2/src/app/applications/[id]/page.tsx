@@ -36,6 +36,12 @@ type JobApplication = {
   notes: string | null;
   date_applied: string;
   created_at: string;
+  location: string | null;
+  work_mode: "remote" | "onsite" | "hybrid" | null;
+  job_requirements: string | null;
+  job_responsibilities: string | null;
+  benefits: string | null;
+  industry: string | null;
 };
 
 const statusConfig = {
@@ -313,6 +319,36 @@ export default function ApplicationViewPage() {
                   )}
                 </div>
 
+                {/* Additional Details Grid */}
+                <div className="grid gap-4 md:grid-cols-3 pt-4 border-t">
+                  {application.location && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Location
+                      </label>
+                      <p className="text-base mt-1">{application.location}</p>
+                    </div>
+                  )}
+
+                  {application.work_mode && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Work Mode
+                      </label>
+                      <p className="text-base mt-1 capitalize">{application.work_mode}</p>
+                    </div>
+                  )}
+
+                  {application.industry && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Industry
+                      </label>
+                      <p className="text-base mt-1">{application.industry}</p>
+                    </div>
+                  )}
+                </div>
+
                 {application.job_posting_url && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
@@ -352,6 +388,63 @@ export default function ApplicationViewPage() {
                   <div className="prose prose-sm max-w-none dark:prose-invert">
                     <pre className="whitespace-pre-wrap font-sans text-sm">
                       {application.job_description}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Requirements */}
+            {application.job_requirements && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Requirements & Qualifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <pre className="whitespace-pre-wrap font-sans text-sm">
+                      {application.job_requirements}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Responsibilities */}
+            {application.job_responsibilities && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Responsibilities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <pre className="whitespace-pre-wrap font-sans text-sm">
+                      {application.job_responsibilities}
+                    </pre>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Benefits */}
+            {application.benefits && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Benefits & Perks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <pre className="whitespace-pre-wrap font-sans text-sm">
+                      {application.benefits}
                     </pre>
                   </div>
                 </CardContent>

@@ -19,6 +19,12 @@ type JobApplication = {
   match_score: number | null;
   notes: string | null;
   date_applied: string;
+  location: string | null;
+  work_mode: "remote" | "onsite" | "hybrid" | null;
+  job_requirements: string | null;
+  job_responsibilities: string | null;
+  benefits: string | null;
+  industry: string | null;
 };
 
 type ApplicationDialogProps = {
@@ -46,6 +52,12 @@ export function ApplicationDialog({
     match_score: null,
     notes: null,
     date_applied: new Date().toISOString().split("T")[0],
+    location: null,
+    work_mode: null,
+    job_requirements: null,
+    job_responsibilities: null,
+    benefits: null,
+    industry: null,
   });
 
   useEffect(() => {
@@ -55,6 +67,11 @@ export function ApplicationDialog({
         job_posting_url: application.job_posting_url || "",
         job_description: application.job_description || "",
         notes: application.notes || "",
+        location: application.location || "",
+        job_requirements: application.job_requirements || "",
+        job_responsibilities: application.job_responsibilities || "",
+        benefits: application.benefits || "",
+        industry: application.industry || "",
         date_applied: application.date_applied.split("T")[0],
       });
     } else if (mode === "add") {
@@ -67,6 +84,12 @@ export function ApplicationDialog({
         match_score: null,
         notes: null,
         date_applied: new Date().toISOString().split("T")[0],
+        location: null,
+        work_mode: null,
+        job_requirements: null,
+        job_responsibilities: null,
+        benefits: null,
+        industry: null,
       });
     }
   }, [application, mode, open]);
@@ -173,6 +196,46 @@ export function ApplicationDialog({
             />
           </div>
 
+          {/* Location, Work Mode, Industry */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g., San Francisco, CA"
+                value={formData.location || ""}
+                onChange={(e) => updateField("location", e.target.value || null)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="work_mode">Work Mode</Label>
+              <Select
+                value={formData.work_mode || ""}
+                onValueChange={(value) => updateField("work_mode", value || null)}
+              >
+                <SelectTrigger id="work_mode">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="onsite">Onsite</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry</Label>
+              <Input
+                id="industry"
+                placeholder="e.g., Technology, Finance"
+                value={formData.industry || ""}
+                onChange={(e) => updateField("industry", e.target.value || null)}
+              />
+            </div>
+          </div>
+
           {/* Match Score */}
           <div className="space-y-2">
             <Label htmlFor="match_score">
@@ -206,6 +269,42 @@ export function ApplicationDialog({
               value={formData.job_description || ""}
               onChange={(e) => updateField("job_description", e.target.value || null)}
               className="min-h-[100px]"
+            />
+          </div>
+
+          {/* Job Requirements */}
+          <div className="space-y-2">
+            <Label htmlFor="job_requirements">Requirements/Qualifications</Label>
+            <Textarea
+              id="job_requirements"
+              placeholder="Required qualifications, skills, and experience..."
+              value={formData.job_requirements || ""}
+              onChange={(e) => updateField("job_requirements", e.target.value || null)}
+              className="min-h-[100px]"
+            />
+          </div>
+
+          {/* Job Responsibilities */}
+          <div className="space-y-2">
+            <Label htmlFor="job_responsibilities">Responsibilities</Label>
+            <Textarea
+              id="job_responsibilities"
+              placeholder="Key responsibilities and duties..."
+              value={formData.job_responsibilities || ""}
+              onChange={(e) => updateField("job_responsibilities", e.target.value || null)}
+              className="min-h-[100px]"
+            />
+          </div>
+
+          {/* Benefits */}
+          <div className="space-y-2">
+            <Label htmlFor="benefits">Benefits & Perks</Label>
+            <Textarea
+              id="benefits"
+              placeholder="Benefits, perks, and compensation details..."
+              value={formData.benefits || ""}
+              onChange={(e) => updateField("benefits", e.target.value || null)}
+              className="min-h-[80px]"
             />
           </div>
 

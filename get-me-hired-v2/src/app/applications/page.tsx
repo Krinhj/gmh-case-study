@@ -35,6 +35,12 @@ type JobApplication = {
   notes: string | null;
   date_applied: string;
   created_at: string;
+  location: string | null;
+  work_mode: "remote" | "onsite" | "hybrid" | null;
+  job_requirements: string | null;
+  job_responsibilities: string | null;
+  benefits: string | null;
+  industry: string | null;
 };
 
 const statusConfig = {
@@ -320,9 +326,19 @@ export default function ApplicationsPage() {
                           <Building2 className="h-4 w-4 text-muted-foreground" />
                           {application.company}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mb-1">
                           {application.role}
                         </p>
+                        {/* Location and Work Mode directly below Role */}
+                        {(application.location || application.work_mode) && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {application.location && <span>{application.location}</span>}
+                            {application.location && application.work_mode && <span>•</span>}
+                            {application.work_mode && (
+                              <span className="capitalize">{application.work_mode}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <Badge
                         variant="outline"
@@ -356,13 +372,6 @@ export default function ApplicationsPage() {
                           </div>
                         </div>
                       </div>
-                    )}
-
-                    {/* Notes Preview */}
-                    {application.notes && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {application.notes}
-                      </p>
                     )}
 
                     {/* Actions */}
