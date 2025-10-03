@@ -82,6 +82,17 @@ After signup, users go through streamlined onboarding:
 - Re-upload resume anytime → Option to "Replace all" or "Merge with existing"
 - Demonstrates data ingestion + parsing capabilities
 
+**AI Skill Detection & Suggestion (Planned Feature):**
+- When users add/edit Experience, Education, or Projects entries with rich data (technologies, coursework, etc.)
+- AI system automatically detects skills/technologies mentioned in array fields
+- Compares against existing skills in Skills tab
+- If new technologies/skills are detected:
+  - Show toast notification: "We detected [React, TypeScript, AWS] in your recent entry. Would you like to add these to your Skills?"
+  - User can click to review and selectively add
+  - Prevents duplicate skills across entries
+  - Ensures Skills tab stays comprehensive and up-to-date
+- **Implementation**: Client-side check after save → Compare arrays against skills table → Prompt user with confirmation modal
+
 ### 🔹 Résumé & Cover Letter Generator
 
 **Two Access Points:**
@@ -828,7 +839,7 @@ CREATE INDEX idx_education_dates ON education_entries(start_date DESC, end_date 
 ---
 
 #### `projects`
-**Purpose:** Store personal/professional projects
+**Purpose:** Store personal/professional projects with rich structured data
 
 ```sql
 CREATE TABLE projects (
@@ -837,6 +848,10 @@ CREATE TABLE projects (
   name text NOT NULL,
   description text,
   project_url text, -- GitHub, demo link, etc.
+  technologies text[], -- Tech stack used (matches job technical_requirements)
+  key_features text[], -- Main features/capabilities built
+  achievements text[], -- Measurable outcomes (users, performance metrics, etc.)
+  role_responsibilities text[], -- Your specific role/contributions (if team project)
   start_date date,
   end_date date,
   is_current boolean DEFAULT false,
@@ -846,6 +861,12 @@ CREATE TABLE projects (
 
 CREATE INDEX idx_projects_user_id ON projects(user_id);
 ```
+
+**Rich Data Fields Rationale:**
+- **technologies[]**: Enables AI to match project tech stack with job requirements
+- **key_features[]**: Demonstrates scope and complexity of work
+- **achievements[]**: Shows measurable impact (e.g., "Increased performance by 40%", "Served 10k users")
+- **role_responsibilities[]**: Clarifies your contribution in team projects vs solo work
 
 ---
 

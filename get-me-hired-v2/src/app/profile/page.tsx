@@ -90,6 +90,10 @@ type Project = {
   name: string;
   description: string;
   project_url: string;
+  technologies: string[];
+  key_features: string[];
+  achievements: string[];
+  role_responsibilities: string[];
   start_date: string;
   end_date: string;
   is_current: boolean;
@@ -169,6 +173,10 @@ export default function ProfilePage() {
     name: "",
     description: "",
     project_url: "",
+    technologies: [],
+    key_features: [],
+    achievements: [],
+    role_responsibilities: [],
     start_date: "",
     end_date: "",
     is_current: false,
@@ -186,6 +194,10 @@ export default function ProfilePage() {
   const [tempCoursework, setTempCoursework] = useState("");
   const [tempEduAchievement, setTempEduAchievement] = useState("");
   const [tempActivity, setTempActivity] = useState("");
+  const [tempProjectTech, setTempProjectTech] = useState("");
+  const [tempKeyFeature, setTempKeyFeature] = useState("");
+  const [tempProjectAchievement, setTempProjectAchievement] = useState("");
+  const [tempRoleResp, setTempRoleResp] = useState("");
 
   // Load user and profile data
   useEffect(() => {
@@ -629,16 +641,28 @@ export default function ProfilePage() {
       name: "",
       description: "",
       project_url: "",
+      technologies: [],
+      key_features: [],
+      achievements: [],
+      role_responsibilities: [],
       start_date: "",
       end_date: "",
       is_current: false,
     });
+    setTempProjectTech("");
+    setTempKeyFeature("");
+    setTempProjectAchievement("");
+    setTempRoleResp("");
     setShowProjectDialog(true);
   };
 
   const handleEditProject = (proj: Project) => {
     setEditingItem(proj);
     setNewProject(proj);
+    setTempProjectTech("");
+    setTempKeyFeature("");
+    setTempProjectAchievement("");
+    setTempRoleResp("");
     setShowProjectDialog(true);
   };
 
@@ -650,6 +674,10 @@ export default function ProfilePage() {
         name: newProject.name,
         description: newProject.description || null,
         project_url: newProject.project_url || null,
+        technologies: newProject.technologies || [],
+        key_features: newProject.key_features || [],
+        achievements: newProject.achievements || [],
+        role_responsibilities: newProject.role_responsibilities || [],
         start_date: newProject.start_date || null,
         end_date: newProject.end_date || null,
       };
@@ -674,6 +702,23 @@ export default function ProfilePage() {
 
       await loadProjects(userId);
       setShowProjectDialog(false);
+      setEditingItem(null);
+      setNewProject({
+        name: "",
+        description: "",
+        project_url: "",
+        technologies: [],
+        key_features: [],
+        achievements: [],
+        role_responsibilities: [],
+        start_date: "",
+        end_date: "",
+        is_current: false,
+      });
+      setTempProjectTech("");
+      setTempKeyFeature("");
+      setTempProjectAchievement("");
+      setTempRoleResp("");
     } catch (error) {
       console.error("Error saving project:", error);
       toast.error("Failed to save project");
@@ -696,6 +741,27 @@ export default function ProfilePage() {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project");
     }
+  };
+
+  const handleCancelProject = () => {
+    setShowProjectDialog(false);
+    setEditingItem(null);
+    setNewProject({
+      name: "",
+      description: "",
+      project_url: "",
+      technologies: [],
+      key_features: [],
+      achievements: [],
+      role_responsibilities: [],
+      start_date: "",
+      end_date: "",
+      is_current: false,
+    });
+    setTempProjectTech("");
+    setTempKeyFeature("");
+    setTempProjectAchievement("");
+    setTempRoleResp("");
   };
 
   // Skills CRUD
@@ -1291,8 +1357,9 @@ export default function ProfilePage() {
                                   href={proj.project_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
+                                  className="text-sm text-primary hover:underline flex items-center gap-1"
                                 >
+                                  <Globe className="h-3 w-3" />
                                   {proj.project_url}
                                 </a>
                               )}
@@ -1306,6 +1373,54 @@ export default function ProfilePage() {
                               )}
                               {proj.description && (
                                 <p className="text-sm mt-3 whitespace-pre-line">{proj.description}</p>
+                              )}
+
+                              {/* Technologies */}
+                              {proj.technologies && proj.technologies.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-sm font-medium mb-1">Technologies:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {proj.technologies.map((tech, idx) => (
+                                      <Badge key={idx} variant="outline" className="text-xs">{tech}</Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Key Features */}
+                              {proj.key_features && proj.key_features.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-sm font-medium mb-1">Key Features:</p>
+                                  <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {proj.key_features.map((feature, idx) => (
+                                      <li key={idx}>{feature}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Achievements */}
+                              {proj.achievements && proj.achievements.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-sm font-medium mb-1">Achievements & Impact:</p>
+                                  <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {proj.achievements.map((achievement, idx) => (
+                                      <li key={idx}>{achievement}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Role & Responsibilities */}
+                              {proj.role_responsibilities && proj.role_responsibilities.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-sm font-medium mb-1">My Role:</p>
+                                  <ul className="text-sm space-y-1 list-disc list-inside">
+                                    {proj.role_responsibilities.map((role, idx) => (
+                                      <li key={idx}>{role}</li>
+                                    ))}
+                                  </ul>
+                                </div>
                               )}
                             </div>
                             <div className="flex gap-2">
@@ -1930,11 +2045,11 @@ export default function ProfilePage() {
 
       {/* Project Dialog */}
       <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Edit Project" : "Add Project"}</DialogTitle>
             <DialogDescription>
-              Add details about your project
+              Add details about your project including technologies, features, and achievements
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1958,6 +2073,257 @@ export default function ProfilePage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="proj-description">Description</Label>
+              <Textarea
+                id="proj-description"
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                placeholder="Brief overview of the project..."
+                rows={3}
+              />
+            </div>
+
+            {/* Technologies */}
+            <div className="space-y-2">
+              <Label>Technologies Used</Label>
+              <div className="space-y-2">
+                {newProject.technologies && newProject.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {newProject.technologies.map((tech, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {tech}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...newProject.technologies];
+                            updated.splice(index, 1);
+                            setNewProject({ ...newProject, technologies: updated });
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={tempProjectTech}
+                    onChange={(e) => setTempProjectTech(e.target.value)}
+                    placeholder="Add a technology (e.g., React, Python)..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tempProjectTech.trim()) {
+                        e.preventDefault();
+                        setNewProject({
+                          ...newProject,
+                          technologies: [...newProject.technologies, tempProjectTech.trim()]
+                        });
+                        setTempProjectTech("");
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (tempProjectTech.trim()) {
+                        setNewProject({
+                          ...newProject,
+                          technologies: [...newProject.technologies, tempProjectTech.trim()]
+                        });
+                        setTempProjectTech("");
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Features */}
+            <div className="space-y-2">
+              <Label>Key Features</Label>
+              <div className="space-y-2">
+                {newProject.key_features && newProject.key_features.length > 0 && (
+                  <ul className="text-sm space-y-1 list-disc list-inside">
+                    {newProject.key_features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="flex-1">{feature}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...newProject.key_features];
+                            updated.splice(idx, 1);
+                            setNewProject({ ...newProject, key_features: updated });
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={tempKeyFeature}
+                    onChange={(e) => setTempKeyFeature(e.target.value)}
+                    placeholder="Add a key feature..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tempKeyFeature.trim()) {
+                        e.preventDefault();
+                        setNewProject({
+                          ...newProject,
+                          key_features: [...newProject.key_features, tempKeyFeature.trim()]
+                        });
+                        setTempKeyFeature("");
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (tempKeyFeature.trim()) {
+                        setNewProject({
+                          ...newProject,
+                          key_features: [...newProject.key_features, tempKeyFeature.trim()]
+                        });
+                        setTempKeyFeature("");
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Achievements */}
+            <div className="space-y-2">
+              <Label>Achievements & Impact</Label>
+              <div className="space-y-2">
+                {newProject.achievements && newProject.achievements.length > 0 && (
+                  <ul className="text-sm space-y-1 list-disc list-inside">
+                    {newProject.achievements.map((achievement, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="flex-1">{achievement}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...newProject.achievements];
+                            updated.splice(idx, 1);
+                            setNewProject({ ...newProject, achievements: updated });
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={tempProjectAchievement}
+                    onChange={(e) => setTempProjectAchievement(e.target.value)}
+                    placeholder="Add an achievement (e.g., Served 10k users)..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tempProjectAchievement.trim()) {
+                        e.preventDefault();
+                        setNewProject({
+                          ...newProject,
+                          achievements: [...newProject.achievements, tempProjectAchievement.trim()]
+                        });
+                        setTempProjectAchievement("");
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (tempProjectAchievement.trim()) {
+                        setNewProject({
+                          ...newProject,
+                          achievements: [...newProject.achievements, tempProjectAchievement.trim()]
+                        });
+                        setTempProjectAchievement("");
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Role & Responsibilities */}
+            <div className="space-y-2">
+              <Label>Your Role & Responsibilities</Label>
+              <div className="space-y-2">
+                {newProject.role_responsibilities && newProject.role_responsibilities.length > 0 && (
+                  <ul className="text-sm space-y-1 list-disc list-inside">
+                    {newProject.role_responsibilities.map((role, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="flex-1">{role}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...newProject.role_responsibilities];
+                            updated.splice(idx, 1);
+                            setNewProject({ ...newProject, role_responsibilities: updated });
+                          }}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <Input
+                    value={tempRoleResp}
+                    onChange={(e) => setTempRoleResp(e.target.value)}
+                    placeholder="Add your role/responsibility..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && tempRoleResp.trim()) {
+                        e.preventDefault();
+                        setNewProject({
+                          ...newProject,
+                          role_responsibilities: [...newProject.role_responsibilities, tempRoleResp.trim()]
+                        });
+                        setTempRoleResp("");
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (tempRoleResp.trim()) {
+                        setNewProject({
+                          ...newProject,
+                          role_responsibilities: [...newProject.role_responsibilities, tempRoleResp.trim()]
+                        });
+                        setTempRoleResp("");
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="proj-start">Start Date</Label>
@@ -1978,20 +2344,9 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="proj-description">Description *</Label>
-              <Textarea
-                id="proj-description"
-                value={newProject.description}
-                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                placeholder="Describe the project, technologies used, and key features..."
-                rows={5}
-              />
-            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowProjectDialog(false)}>
+            <Button variant="outline" onClick={handleCancelProject}>
               Cancel
             </Button>
             <Button onClick={handleSaveProject}>
