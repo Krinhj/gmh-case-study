@@ -1293,50 +1293,62 @@ CREATE POLICY "Users can delete own profile picture"
 
 ---
 
-## 8. n8n Automation Workflows
+## 8. AI Integration via Supabase Edge Functions
 
 ### Overview
 
-**n8n** serves as the orchestration layer for all AI-powered features:
+**Supabase Edge Functions** serve as the serverless compute layer for all AI-powered features:
 - Resume parsing (PDF/Docx → structured JSON)
 - Job matching analysis (profile + job posting → match score + insights)
 - Document generation (profile + job posting → LaTeX → PDF)
+- Document preview (generate preview without saving to database)
 
 **Architecture:**
 ```
-Next.js API Route → n8n Webhook → OpenAI API → Response → Next.js
+Next.js App → Next.js API Route → Supabase Edge Function → OpenAI API → LaTeX Compiler → Response
+                                          ↓
+                                   Supabase Database
+                                          ↓
+                                   Supabase Storage
 ```
 
-**Why n8n?**
-- Visual workflow builder (easier to modify AI prompts)
-- Built-in integrations (OpenAI, HTTP, file handling)
-- Error handling and retry logic
-- Can be self-hosted or use n8n Cloud
-- Separates AI logic from application code
+**Why Edge Functions instead of n8n?**
+- ✅ **Cost-effective:** No monthly subscription, pay-per-use OpenAI calls only
+- ✅ **Performance:** Direct API calls, no webhook latency
+- ✅ **Control:** Full TypeScript code, easier debugging and customization
+- ✅ **Deployment:** Built-in with Supabase, no separate infrastructure
+- ✅ **Portfolio Value:** Demonstrates custom system design vs. no-code tools
+- ✅ **Scalability:** Auto-scaling serverless functions
 
 ---
 
-### Workflow 1: Resume Parsing
+### Edge Function 1: `parse-resume`
 
 **Purpose:** Extract structured data from uploaded resume (PDF/Docx)
 
-**Trigger:** Webhook POST from Next.js API route
-- **Endpoint:** `https://your-n8n-instance.com/webhook/parse-resume`
-- **Input:** `{ file_url: string, user_id: string }`
+**Endpoint:** `POST /functions/v1/parse-resume`
 
-**Workflow Steps:**
+**Input (JSON):**
+```typescript
+{
+  file_url: string;  // Supabase Storage URL
+  user_id: string;
+}
+```
 
-1. **HTTP Request Node** - Fetch file from Supabase Storage
-   - Input: `file_url` from webhook
-   - Output: File buffer
+**Function Logic:**
 
-2. **Extract Document Text Node** (n8n built-in or custom)
-   - Handles PDF and Docx formats
-   - Extracts raw text
-   - Output: Plain text string
+1. **Fetch file from Supabase Storage**
+   - Use Supabase client to download file from Storage bucket
+   - Handle authentication with service role key
 
-3. **OpenAI Node** - Parse text into structured JSON
-   - **Model:** GPT-4 or GPT-4-Turbo
+2. **Extract text from PDF**
+   - Use `pdf-parse` library (Deno-compatible)
+   - Extract raw text from PDF buffer
+   - For Docx: Use text extraction library
+
+3. **Call OpenAI API to parse structured data**
+   - **Model:** `gpt-4o`
    - **System Prompt:**
      ```
      You are a resume parser. Extract structured information from the resume text.
@@ -1346,16 +1358,22 @@ Next.js API Route → n8n Webhook → OpenAI API → Response → Next.js
          "name": "string",
          "email": "string",
          "phone": "string",
-         "location": "string"
+         "location": "string",
+         "linkedin": "string",
+         "github": "string",
+         "portfolio": "string"
        },
        "experience": [
          {
            "company": "string",
            "role": "string",
+           "location": "string",
            "start_date": "YYYY-MM",
            "end_date": "YYYY-MM or null if current",
            "description": "string",
-           "skills": ["skill1", "skill2"]
+           "responsibilities": ["item1", "item2"],
+           "achievements": ["achievement1"],
+           "technologies": ["tech1", "tech2"]
          }
        ],
        "education": [
@@ -1363,103 +1381,316 @@ Next.js API Route → n8n Webhook → OpenAI API → Response → Next.js
            "institution": "string",
            "degree": "string",
            "field_of_study": "string",
+           "location": "string",
            "start_date": "YYYY-MM",
-           "end_date": "YYYY-MM or null if current"
+           "end_date": "YYYY-MM or null if current",
+           "gpa": "string",
+           "relevant_coursework": ["course1"],
+           "achievements": ["achievement1"],
+           "activities": ["activity1"]
          }
        ],
        "projects": [
          {
            "name": "string",
            "description": "string",
-           "skills": ["skill1", "skill2"]
+           "project_url": "string",
+           "technologies": ["tech1", "tech2"],
+           "key_features": ["feature1"],
+           "achievements": ["achievement1"],
+           "role_responsibilities": ["role1"]
          }
        ],
        "skills": [
          {
            "name": "string",
-           "category": "technical|soft_skill|language|tool"
+           "category": "technical|soft_skill|language|tool",
+           "proficiency_level": "beginner|intermediate|advanced|expert"
          }
        ]
      }
      ```
    - **User Prompt:** `Parse this resume:\n\n${resume_text}`
 
-4. **Code Node (JavaScript)** - Validate and clean JSON
-   - Ensure all required fields present
-   - Handle parsing errors
-   - Format dates consistently
+4. **Validate and clean response**
+   - Ensure all required fields are present
+   - Format dates consistently (YYYY-MM-DD)
+   - Handle parsing errors gracefully
 
-5. **Respond to Webhook Node**
-   - Return structured JSON to Next.js
-   - Include `success: true/false` flag
-   - Include `error_message` if failed
+**Output (JSON):**
+```typescript
+{
+  success: boolean;
+  data?: {
+    personal_info: {...},
+    experience: [...],
+    education: [...],
+    projects: [...],
+    skills: [...]
+  };
+  error?: string;
+}
+```
 
 **Error Handling:**
-- If text extraction fails → Return error with message
-- If OpenAI parsing fails → Retry once, then return error
-- All errors logged in n8n execution history
+- Retry OpenAI calls up to 2 times with exponential backoff
+- Log errors to Edge Function logs
+- Return user-friendly error messages
 
-**Next.js Integration:**
+**Next.js API Route Wrapper:**
 ```typescript
 // app/api/parse-resume/route.ts
-const response = await fetch('https://n8n-instance.com/webhook/parse-resume', {
-  method: 'POST',
-  body: JSON.stringify({ file_url, user_id })
-});
-const parsed_data = await response.json();
-// Insert into Supabase
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { file_url } = await request.json();
+
+  // Call Edge Function
+  const { data, error } = await supabase.functions.invoke('parse-resume', {
+    body: { file_url, user_id: user.id }
+  });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json(data);
+}
 ```
 
 ---
 
-### Workflow 2: Job Match Analysis
+### Edge Function 2: `analyze-job-match`
 
 **Purpose:** Analyze how well user's profile matches job requirements
 
-**Trigger:** Webhook POST from Next.js
-- **Endpoint:** `https://your-n8n-instance.com/webhook/job-match`
-- **Input:**
-  ```json
-  {
-    "user_profile": {
-      "name": "string",
-      "experience": [...],
-      "education": [...],
-      "projects": [...],
-      "skills": [...]
-    },
-    "job_posting": {
-      "company": "string",
-      "role": "string",
-      "description": "string"
-    }
-  }
-  ```
+**Endpoint:** `POST /functions/v1/analyze-job-match`
 
-**Workflow Steps:**
+**Input (JSON):**
+```typescript
+{
+  user_id: string;
+  job_application_id: string;
+}
+```
 
-1. **Code Node** - Format data for AI
-   - Combine profile data into readable text
-   - Extract key requirements from job posting
-   - Create structured prompt
+**Function Logic:**
 
-2. **OpenAI Node** - Analyze match
-   - **Model:** GPT-4
+1. **Fetch user profile data from Supabase**
+   - Query all profile tables: `profiles`, `work_experience`, `education`, `projects`, `skills`
+   - Combine into structured profile object
+   - Include rich array data (technologies, achievements, responsibilities, etc.)
+
+2. **Fetch job application data**
+   - Query `job_applications` table for job posting details
+   - Extract: company, role, job_description, required_skills, preferred_skills, responsibilities, qualifications
+
+3. **Format data for OpenAI prompt**
+   - Convert profile arrays into readable format
+   - Structure job requirements clearly
+   - Prepare comprehensive context
+
+4. **Call OpenAI API to analyze match**
+   - **Model:** `gpt-4o`
    - **System Prompt:**
      ```
-     You are a job matching expert. Analyze how well the candidate's profile matches the job requirements.
+     You are a job matching expert and career advisor. Analyze how well the candidate's profile matches the job requirements.
+
+     Evaluate based on:
+     - Technical skills alignment
+     - Experience relevance (role, industry, responsibilities)
+     - Education requirements
+     - Project portfolio fit
+     - Years of experience
+     - Specific achievements that demonstrate required competencies
 
      Return ONLY valid JSON with this structure:
      {
        "match_score": 0-100 (integer),
        "matching_skills": ["skill1", "skill2"],
        "missing_skills": ["skill3", "skill4"],
+       "strong_points": ["What makes candidate a good fit"],
+       "weak_points": ["Areas where candidate may fall short"],
        "recommendations": [
          "Specific advice for improving match",
-         "Highlight these experiences in resume"
+         "Experiences to highlight in resume",
+         "Skills to emphasize in cover letter"
        ],
        "should_apply": true/false,
-       "reasoning": "Brief explanation of match score"
+       "reasoning": "2-3 sentence explanation of match score"
+     }
+     ```
+   - **User Prompt:**
+     ```
+     Candidate Profile:
+     Name: ${name}
+
+     Experience:
+     ${formatted_experience}
+
+     Education:
+     ${formatted_education}
+
+     Projects:
+     ${formatted_projects}
+
+     Skills:
+     ${formatted_skills}
+
+     Job Posting:
+     Company: ${company}
+     Role: ${role}
+     Description: ${job_description}
+     Required Skills: ${required_skills}
+     Preferred Skills: ${preferred_skills}
+     Responsibilities: ${responsibilities}
+     Qualifications: ${qualifications}
+
+     Analyze the match thoroughly.
+     ```
+
+5. **Validate response and update database**
+   - Ensure match_score is 0-100
+   - Validate JSON structure
+   - Update `job_applications` table with `match_score` and `match_insights`
+
+**Output (JSON):**
+```typescript
+{
+  success: boolean;
+  data?: {
+    match_score: number;
+    matching_skills: string[];
+    missing_skills: string[];
+    strong_points: string[];
+    weak_points: string[];
+    recommendations: string[];
+    should_apply: boolean;
+    reasoning: string;
+  };
+  error?: string;
+}
+```
+
+**Error Handling:**
+- Retry OpenAI calls up to 2 times with exponential backoff
+- If profile data incomplete, return warning in recommendations
+- Graceful degradation if optional fields missing
+
+**Next.js API Route Wrapper:**
+```typescript
+// app/api/analyze-match/route.ts
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { job_application_id } = await request.json();
+
+  // Call Edge Function
+  const { data, error } = await supabase.functions.invoke('analyze-job-match', {
+    body: { user_id: user.id, job_application_id }
+  });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json(data);
+}
+```
+
+---
+
+### Edge Function 3: `generate-resume`
+
+**Purpose:** Generate tailored resume PDF from profile + job posting
+
+**Endpoint:** `POST /functions/v1/generate-resume`
+
+**Input (JSON):**
+```typescript
+{
+  user_id: string;
+  job_application_id: string;
+  preview?: boolean;  // If true, return content without saving to database/storage
+}
+```
+
+**Function Logic:**
+
+1. **Fetch user profile data from Supabase**
+   - Query all profile tables with rich data
+   - Personal info (name, email, phone, location, links)
+   - Work experience (with responsibilities[], achievements[], technologies[])
+   - Education (with relevant_coursework[], achievements[], activities[])
+   - Projects (with technologies[], key_features[], achievements[], role_responsibilities[])
+   - Skills (categorized)
+
+2. **Fetch job application data**
+   - Job posting details (company, role, description, requirements)
+
+3. **Call OpenAI API to generate tailored content**
+   - **Model:** `gpt-4o`
+   - **System Prompt:**
+     ```
+     You are an expert resume writer and ATS optimization specialist.
+
+     Your task: Generate tailored resume CONTENT (not the full LaTeX file) that highlights the candidate's most relevant experiences and skills for this specific job.
+
+     IMPORTANT: Return ONLY structured JSON content that will be injected into a LaTeX template.
+
+     Guidelines:
+     - Tailor the professional summary to the job role
+     - Prioritize and reorder experiences based on relevance to the job
+     - Rewrite experience bullets to emphasize achievements matching job requirements
+     - Highlight technical skills and technologies mentioned in the job posting
+     - Include only the most relevant projects (2-3 max)
+     - Use action verbs and quantifiable achievements
+     - Optimize for ATS (Applicant Tracking Systems)
+
+     Return ONLY valid JSON with this structure:
+     {
+       "professional_summary": "2-3 sentence summary tailored to the role",
+       "experience": [
+         {
+           "company": "Company Name",
+           "role": "Job Title",
+           "location": "City, State",
+           "dates": "Month YYYY - Month YYYY",
+           "bullets": [
+             "Tailored achievement with metrics",
+             "Relevant responsibility emphasizing required skills"
+           ]
+         }
+       ],
+       "education": [
+         {
+           "institution": "University Name",
+           "degree": "Degree Name",
+           "field": "Field of Study",
+           "location": "City, State",
+           "dates": "Month YYYY - Month YYYY",
+           "gpa": "3.8/4.0",
+           "honors": ["Honor 1", "Honor 2"],
+           "relevant_coursework": ["Course 1", "Course 2"]
+         }
+       ],
+       "projects": [
+         {
+           "name": "Project Name",
+           "technologies": ["Tech1", "Tech2"],
+           "bullets": [
+             "Key feature or achievement",
+             "Impact or result"
+           ]
+         }
+       ],
+       "skills": {
+         "technical": ["Skill1", "Skill2"],
+         "tools": ["Tool1", "Tool2"],
+         "languages": ["Language1"]
+       }
      }
      ```
    - **User Prompt:**
@@ -1471,209 +1702,123 @@ const parsed_data = await response.json();
      Company: ${company}
      Role: ${role}
      Description: ${job_description}
+     Required Skills: ${required_skills}
+     Qualifications: ${qualifications}
 
-     Analyze the match.
+     Generate tailored resume content optimized for this job.
      ```
 
-3. **Code Node** - Validate response
-   - Ensure match_score is 0-100
-   - Validate JSON structure
-   - Add metadata (analyzed_at timestamp)
+4. **Load LaTeX template and inject content**
+   - Use **Mustache.js** (Deno-compatible) for template injection
+   - Load base LaTeX template (ATS-optimized resume template)
+   - Inject AI-generated content + personal info from database
+   - Handle arrays (loop through experiences, projects, skills)
+   - Output: Complete LaTeX string
 
-4. **Respond to Webhook**
-   - Return analysis to Next.js
-   - Include success flag
+5. **Compile LaTeX to PDF**
+   - POST LaTeX string to **LaTeX.Online API** (`https://latexonline.cc/compile`)
+   - Receive PDF buffer in response
+   - Handle compilation errors (invalid LaTeX syntax)
 
-**Next.js Integration:**
+6. **If preview mode:**
+   - Return PDF as base64 or direct buffer
+   - Do NOT save to storage or database
+   - Allow user to preview before saving
+
+7. **If NOT preview mode (final generation):**
+   - Upload PDF to Supabase Storage (`generated-documents` bucket)
+   - Path: `${user_id}/${job_application_id}_resume_${timestamp}.pdf`
+   - Insert record into `generated_documents` table
+   - Return download URL
+
+**Output (JSON):**
 ```typescript
-// app/api/analyze-match/route.ts
-const analysis = await fetch('https://n8n-instance.com/webhook/job-match', {
-  method: 'POST',
-  body: JSON.stringify({ user_profile, job_posting })
-});
-const match_data = await analysis.json();
-// Update job_applications table with match_score and match_insights
+{
+  success: boolean;
+  data?: {
+    file_url?: string;        // Only if not preview
+    file_name?: string;       // Only if not preview
+    document_id?: string;     // Only if not preview
+    pdf_base64?: string;      // Only if preview
+    latex_content?: string;   // For debugging
+  };
+  error?: string;
+}
 ```
 
----
-
-### Workflow 3: Resume Generation (LaTeX → PDF)
-
-**Purpose:** Generate tailored resume based on profile + job posting
-
-**Trigger:** Webhook POST from Next.js
-- **Endpoint:** `https://your-n8n-instance.com/webhook/generate-resume`
-- **Input:**
-  ```json
-  {
-    "user_profile": {...},
-    "job_posting": {...},
-    "template": "modern|classic|minimal",
-    "user_id": "uuid",
-    "job_application_id": "uuid"
-  }
-  ```
-
-**Workflow Steps:**
-
-1. **OpenAI Node** - Generate tailored content
-   - **Model:** GPT-4
-   - **System Prompt:**
-     ```
-     You are an expert resume writer. Create a tailored resume that highlights
-     the most relevant experiences and skills for this specific job.
-
-     Return a JSON object with:
-     {
-       "summary": "2-3 sentence professional summary tailored to this role",
-       "prioritized_experiences": [
-         // Reorder and rewrite experience descriptions to match job
-         {
-           "company": "string",
-           "role": "string",
-           "dates": "string",
-           "bullets": ["Achievement 1", "Achievement 2"] // Tailored to job
-         }
-       ],
-       "prioritized_skills": ["skill1", "skill2"], // Most relevant skills first
-       "relevant_projects": [...] // Projects that match job requirements
-     }
-     ```
-   - **User Prompt:** `Profile: ${profile}\n\nJob: ${job_posting}\n\nCreate tailored resume content.`
-
-2. **Code Node** - Generate LaTeX from template
-   - Load LaTeX template (based on `template` parameter)
-   - Inject tailored content into template
-   - Format dates, bullets, sections
-   - Output: LaTeX string
-
-3. **HTTP Request Node** - Compile LaTeX to PDF
-   - **Option A:** Use external service (e.g., Overleaf API, LaTeX Online)
-   - **Option B:** Self-hosted LaTeX compiler (Docker container)
-   - Input: LaTeX string
-   - Output: PDF buffer
-
-4. **Supabase Node** - Upload PDF to Storage
-   - Bucket: `generated-documents`
-   - Path: `${user_id}/${job_application_id}_resume_${timestamp}.pdf`
-   - Get public/signed URL
-
-5. **Code Node** - Insert record into database
-   - Table: `generated_documents`
-   - Fields: user_id, job_application_id, document_type, file_url, template_used, created_at
-
-6. **Respond to Webhook**
-   - Return PDF URL and document metadata
-
-**LaTeX Template Structure:**
+**LaTeX Template Structure (Mustache):**
 ```latex
-\documentclass{article}
-% ... preamble ...
+\documentclass[letterpaper,11pt]{article}
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+% ... ATS-optimized preamble from user's resume ...
+
 \begin{document}
-  \section*{${name}}
-  ${contact_info}
 
-  \section*{Summary}
-  ${ai_generated_summary}
+% Personal Info (from database)
+\begin{center}
+  {\Huge \scshape {{name}}} \\ \vspace{1pt}
+  {{phone}} $|$ {{email}} $|$ {{location}} \\
+  {{#linkedin}}\href{ {{linkedin}} }{LinkedIn}{{/linkedin}} $|$
+  {{#github}}\href{ {{github}} }{GitHub}{{/github}} $|$
+  {{#portfolio}}\href{ {{portfolio}} }{Portfolio}{{/portfolio}}
+\end{center}
 
-  \section*{Experience}
-  % Loop through prioritized_experiences
-  \textbf{${role}} at \textit{${company}} \hfill ${dates}
-  \begin{itemize}
-    % Loop through bullets
-    \item ${bullet}
+% Professional Summary (from OpenAI)
+\section{Professional Summary}
+{{professional_summary}}
+
+% Experience (from OpenAI - tailored)
+\section{Experience}
+{{#experience}}
+  \textbf{ {{role}} } \hfill {{dates}} \\
+  \textit{ {{company}} } \hfill {{location}}
+  \begin{itemize}[leftmargin=0.15in, label={}]
+    {{#bullets}}
+    \item {{.}}
+    {{/bullets}}
   \end{itemize}
+{{/experience}}
 
-  \section*{Skills}
-  ${prioritized_skills}
+% Projects (from OpenAI - most relevant)
+\section{Projects}
+{{#projects}}
+  \textbf{ {{name}} } $|$ \textit{ {{#technologies}}{{.}}, {{/technologies}} } \\
+  \begin{itemize}[leftmargin=0.15in, label={}]
+    {{#bullets}}
+    \item {{.}}
+    {{/bullets}}
+  \end{itemize}
+{{/projects}}
+
+% Education (from OpenAI)
+\section{Education}
+{{#education}}
+  \textbf{ {{institution}} } \hfill {{dates}} \\
+  {{degree}} in {{field}} {{#gpa}}-- GPA: {{gpa}}{{/gpa}} \hfill {{location}}
+  {{#relevant_coursework}}
+  \\ \textit{Relevant Coursework:} {{#relevant_coursework}}{{.}}, {{/relevant_coursework}}
+  {{/relevant_coursework}}
+{{/education}}
+
+% Skills (from OpenAI - prioritized)
+\section{Technical Skills}
+\textbf{Technical:} {{#skills.technical}}{{.}}, {{/skills.technical}} \\
+\textbf{Tools \& Frameworks:} {{#skills.tools}}{{.}}, {{/skills.tools}} \\
+{{#skills.languages}}\textbf{Languages:} {{#skills.languages}}{{.}}, {{/skills.languages}}{{/skills.languages}}
+
 \end{document}
 ```
 
----
-
-### Workflow 4: Cover Letter Generation
-
-**Purpose:** Generate tailored cover letter
-
-**Trigger:** Webhook POST from Next.js
-- **Endpoint:** `https://your-n8n-instance.com/webhook/generate-cover-letter`
-- **Input:** Same as resume generation
-
-**Workflow Steps:**
-
-1. **OpenAI Node** - Generate cover letter
-   - **Model:** GPT-4
-   - **System Prompt:**
-     ```
-     You are an expert cover letter writer. Write a compelling, personalized
-     cover letter that connects the candidate's experience to the job requirements.
-
-     Format: 3-4 paragraphs
-     1. Introduction - Express interest, mention how you found the role
-     2. Body - Highlight 2-3 relevant experiences/achievements
-     3. Connection - Explain why you're a great fit
-     4. Closing - Call to action
-
-     Tone: Professional but personable, enthusiastic but not desperate.
-     ```
-   - **User Prompt:** Full profile + job posting
-
-2. **Code Node** - Format as PDF
-   - Simple LaTeX template for cover letter
-   - Or use HTML → PDF converter
-
-3. **Supabase Node** - Upload to storage
-
-4. **Respond to Webhook** - Return URL
-
----
-
-### n8n Configuration & Deployment
-
-**Environment Variables (n8n):**
-```env
-OPENAI_API_KEY=sk-...
-SUPABASE_URL=https://...
-SUPABASE_SERVICE_ROLE_KEY=...  # For direct DB access
-LATEX_COMPILER_URL=https://...  # If using external service
-```
-
-**Webhook Security:**
-- Use webhook authentication tokens
-- Validate user_id matches authenticated user
-- Rate limiting to prevent abuse
-
 **Error Handling:**
-- All workflows have error handlers
-- Failed executions logged in n8n
-- Retry logic for transient failures (API rate limits)
-- Fallback responses for AI failures
+- Retry OpenAI calls up to 2 times
+- If LaTeX compilation fails, return error with LaTeX source for debugging
+- Handle missing profile data gracefully
 
-**Deployment Options:**
-
-**Option A: n8n Cloud** (Recommended for MVP)
-- Hosted by n8n
-- No infrastructure management
-- $20/month starter plan
-- Automatic updates
-
-**Option B: Self-Hosted**
-- Docker container on DigitalOcean/AWS
-- Full control
-- One-time setup cost
-- Requires maintenance
-
----
-
-### Next.js API Routes (Wrappers)
-
-All n8n webhooks called from Next.js API routes for:
-- Authentication (verify user before calling n8n)
-- Data fetching (get profile from Supabase)
-- Error handling (user-friendly messages)
-- Response formatting
-
-**Example:**
+**Next.js API Route Wrapper:**
 ```typescript
 // app/api/generate-resume/route.ts
 export async function POST(request: Request) {
@@ -1682,25 +1827,209 @@ export async function POST(request: Request) {
 
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { job_application_id } = await request.json();
+  const { job_application_id, preview = false } = await request.json();
 
-  // Fetch data from Supabase
-  const profile = await fetchUserProfile(user.id);
-  const job = await fetchJobApplication(job_application_id);
-
-  // Call n8n webhook
-  const response = await fetch(process.env.N8N_WEBHOOK_GENERATE_RESUME, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.N8N_WEBHOOK_SECRET}`
-    },
-    body: JSON.stringify({ profile, job, user_id: user.id })
+  // Call Edge Function
+  const { data, error } = await supabase.functions.invoke('generate-resume', {
+    body: { user_id: user.id, job_application_id, preview }
   });
 
-  const result = await response.json();
-  return Response.json(result);
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json(data);
 }
+```
+
+---
+
+### Edge Function 4: `generate-cover-letter`
+
+**Purpose:** Generate tailored cover letter PDF
+
+**Endpoint:** `POST /functions/v1/generate-cover-letter`
+
+**Input (JSON):**
+```typescript
+{
+  user_id: string;
+  job_application_id: string;
+  preview?: boolean;  // If true, return content without saving
+}
+```
+
+**Function Logic:**
+
+1. **Fetch profile and job data** (same as resume generation)
+
+2. **Call OpenAI API to generate cover letter**
+   - **Model:** `gpt-4o`
+   - **System Prompt:**
+     ```
+     You are an expert cover letter writer.
+
+     Write a compelling, personalized cover letter that connects the candidate's experience to the job requirements.
+
+     Format: 3-4 paragraphs
+     1. Introduction - Express genuine interest, mention how you found the role or connection to company
+     2. Body (1-2 paragraphs) - Highlight 2-3 specific relevant experiences/achievements with metrics
+     3. Connection - Explain why you're uniquely suited for this role and company
+     4. Closing - Strong call to action, express enthusiasm
+
+     Tone: Professional but personable, enthusiastic but not desperate, confident but humble.
+     Length: 300-400 words
+
+     Return ONLY valid JSON:
+     {
+       "paragraphs": [
+         "Introduction paragraph",
+         "Body paragraph 1",
+         "Body paragraph 2",
+         "Closing paragraph"
+       ],
+       "salutation": "Dear Hiring Manager" or "Dear [Name]" if known
+     }
+     ```
+   - **User Prompt:** Include full profile + job details
+
+3. **Inject into LaTeX cover letter template**
+   - Simple professional letter format
+   - Include personal info, date, company address
+   - Format paragraphs properly
+
+4. **Compile LaTeX to PDF** (LaTeX.Online API)
+
+5. **Preview or Save** (same logic as resume)
+
+**Output:** Same structure as resume generation
+
+**LaTeX Cover Letter Template (Mustache):**
+```latex
+\documentclass[11pt]{letter}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\signature{ {{name}} }
+\address{
+  {{name}} \\
+  {{location}} \\
+  {{phone}} \\
+  {{email}}
+}
+
+\begin{document}
+
+\begin{letter}{
+  Hiring Manager \\
+  {{company}} \\
+  [Company Address if known]
+}
+
+\opening{ {{salutation}}, }
+
+{{#paragraphs}}
+{{.}}
+
+{{/paragraphs}}
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}
+```
+
+**Next.js API Route Wrapper:**
+```typescript
+// app/api/generate-cover-letter/route.ts
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { job_application_id, preview = false } = await request.json();
+
+  const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
+    body: { user_id: user.id, job_application_id, preview }
+  });
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json(data);
+}
+```
+
+---
+
+### Environment Variables & Configuration
+
+**Supabase Edge Functions (Secrets):**
+```bash
+# Set via CLI or Supabase dashboard
+supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set LATEX_ONLINE_URL=https://latexonline.cc/compile
+```
+
+**Edge Function Access:**
+- Environment variables accessed via `Deno.env.get('OPENAI_API_KEY')`
+- Supabase client uses built-in service role key
+
+**Next.js Environment Variables:**
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...  # For server-side operations
+```
+
+---
+
+### Preview Functionality Flow
+
+**User Experience:**
+
+1. User clicks "Generate Resume" button
+2. Modal opens with options:
+   - **Preview** (shows generated PDF without saving)
+   - **Generate & Save** (saves to database + storage)
+3. If Preview:
+   - Call API with `preview: true`
+   - Show PDF in modal viewer (using pdf.js or embed)
+   - User can review content
+   - Option to "Save This Version" or "Cancel & Regenerate"
+4. If Generate & Save (or after preview approval):
+   - Call API with `preview: false`
+   - Save to storage + database
+   - Show download button + success message
+
+**Implementation:**
+```typescript
+// In Next.js component
+const handlePreview = async () => {
+  const response = await fetch('/api/generate-resume', {
+    method: 'POST',
+    body: JSON.stringify({
+      job_application_id,
+      preview: true
+    })
+  });
+
+  const { pdf_base64 } = await response.json();
+  // Show PDF in modal
+  setPdfPreview(`data:application/pdf;base64,${pdf_base64}`);
+};
+
+const handleSave = async () => {
+  const response = await fetch('/api/generate-resume', {
+    method: 'POST',
+    body: JSON.stringify({
+      job_application_id,
+      preview: false
+    })
+  });
+
+  const { file_url, document_id } = await response.json();
+  toast.success('Resume generated successfully!');
+  // Show download button
+};
 ```
 
 ---
@@ -1712,12 +2041,16 @@ export async function POST(request: Request) {
 1. User signs up → Redirected to `/onboarding`
 2. **Stage 1**: Option to upload resume (PDF/Docx) or skip to manual entry
 3. If uploaded:
-   - Next.js API route sends file to n8n
-   - n8n extracts text → OpenAI parses into structured JSON
+   - File uploaded to Supabase Storage (`resumes` bucket)
+   - Next.js API route calls `parse-resume` Edge Function
+   - Edge Function extracts text → OpenAI parses into structured JSON
    - Returns: `{personal_info: {}, experience: [], education: [], projects: [], skills: []}`
 4. **Stage 2**: Display parsed data for review/verification
    - User can edit, add, remove entries inline
-5. **Stage 3**: Save to Supabase (profiles, experience_entries, education_entries, projects)
+   - All changes staged in local state
+5. **Stage 3**: Save to Supabase
+   - Insert into `profiles`, `work_experience`, `education`, `projects`, `skills` tables
+   - Atomic transaction ensures data integrity
 6. Redirect to `/dashboard`
 
 **Post-Onboarding Resume Upload:**
@@ -1725,50 +2058,154 @@ export async function POST(request: Request) {
 - Choose: "Replace All Data" or "Merge with Existing"
 - Same parsing flow, with update logic instead of insert
 
+---
+
 ### Job Match Analysis
 
-1. User adds job application or uses Try-Out Mode
-2. System fetches user profile data + job posting text
-3. Send to n8n → OpenAI analyzes match
-4. Returns:
-   - Match score (0-100)
-   - Missing skills/requirements
-   - Recommendations
-5. Display insights to user with option to proceed
+1. User adds or edits job application
+2. **Option 1:** Automatically trigger analysis on save
+3. **Option 2:** Manual trigger via "Analyze Match" button on `/applications/[id]`
+4. Process:
+   - Next.js API route calls `analyze-job-match` Edge Function
+   - Edge Function fetches profile + job data from Supabase
+   - OpenAI analyzes match based on skills, experience, qualifications
+   - Returns match score (0-100) + insights
+   - Updates `job_applications` table with `match_score` and `match_insights`
+5. Display insights to user:
+   - Match percentage with color-coded indicator
+   - Matching skills (green badges)
+   - Missing skills (red badges)
+   - Recommendations for improving application
+   - "Proceed to Generate Resume" button
 
-### Tailored Resume Generation (RAG)
+---
 
-1. User clicks "Generate Resume" from `/applications/[id]` or `/generate`
-2. System runs job match analysis (if not already done)
-3. Fetch profile + job posting text
-4. Send to n8n (OpenAI prompt with RAG)
-5. Generate LaTeX PDF résumé + cover letter
-6. Store in Supabase Storage → return download link
-7. User downloads documents
+### Tailored Resume Generation with Preview
+
+1. User navigates to `/applications/[id]` → Documents tab
+2. Clicks "Generate Resume" button
+3. **Generation Modal Opens** with two options:
+   - **Preview First** (recommended)
+   - **Generate & Save Directly**
+
+**Preview Flow:**
+4. User clicks "Preview"
+5. Loading state: "Generating preview..."
+6. Process:
+   - API calls `generate-resume` Edge Function with `preview: true`
+   - Edge Function:
+     - Fetches profile + job data
+     - Calls OpenAI for tailored content
+     - Injects into LaTeX template
+     - Compiles to PDF
+     - Returns PDF as base64 string (NOT saved to storage/database)
+7. **PDF Preview Modal** displays generated resume
+   - PDF viewer component shows full document
+   - User reviews content
+   - Options:
+     - **"Save This Version"** → Saves to storage + database
+     - **"Regenerate"** → Calls OpenAI again for new version
+     - **"Cancel"** → Closes modal
+
+**Direct Generation Flow:**
+4. User clicks "Generate & Save"
+5. Loading state: "Generating resume..."
+6. API calls `generate-resume` Edge Function with `preview: false`
+7. Edge Function saves PDF to Storage and creates database record
+8. Success: Download link + "View" button appears
+9. Document listed in Documents tab
+
+**Same Flow for Cover Letters**
+
+---
+
+### Try-Out Mode (Landing Page)
+
+**Purpose:** Allow visitors to test AI generation without signup
+
+1. User visits landing page (`/`)
+2. **Try-Out Section:**
+   - Paste job posting text
+   - Choose data source:
+     - **Use My Info:** Quick form (name, email, 2-3 key experiences, skills list)
+     - **Use Demo Data:** Pre-filled placeholder profile
+3. Click "Generate Sample Resume"
+4. Process:
+   - Lightweight API route (NO auth required)
+   - Calls `analyze-job-match` and `generate-resume` with provided data
+   - Returns PDF preview (NOT saved to database)
+5. User can download sample PDF
+6. CTA: "Sign up to save your profile and generate unlimited resumes"
+
+---
 
 ## 10. Deployment
 
-- **Frontend**: Vercel (Next.js hosting)
-- **Database**: Supabase Cloud
-- **Automation**: n8n Cloud (connected via API)
-- **CI/CD**: GitHub → Vercel auto-deploy
+**Infrastructure:**
+- **Frontend:** Vercel (Next.js hosting with automatic deployments)
+- **Database:** Supabase Cloud (PostgreSQL with RLS)
+- **Storage:** Supabase Storage (PDF files, uploaded resumes, profile pictures)
+- **Serverless Functions:** Supabase Edge Functions (Deno runtime)
+- **AI:** OpenAI API (GPT-4o)
+- **LaTeX Compilation:** LaTeX.Online API (cloud service)
 
-## 11. Case Study Scope (5-Day Build)
+**CI/CD Pipeline:**
+```
+GitHub (feature branch)
+  ↓
+  Push to GitHub
+  ↓
+  Vercel auto-deploy (preview deployment)
+  ↓
+  Merge to main
+  ↓
+  Vercel production deployment
+```
+
+**Edge Functions Deployment:**
+```bash
+# Deploy all Edge Functions at once
+supabase functions deploy
+
+# Or deploy individually
+supabase functions deploy parse-resume
+supabase functions deploy analyze-job-match
+supabase functions deploy generate-resume
+supabase functions deploy generate-cover-letter
+```
+
+**Environment Variables:**
+- Supabase secrets managed via CLI or dashboard
+- Next.js env vars via Vercel dashboard
+- OpenAI API key stored as Supabase secret
+
+---
+
+## 11. Case Study Scope
 
 ### Core Features
-- ✅ Landing Page with Try-Out Mode (choose own data or placeholder → AI-generated docs)
-- ✅ Job Application Tracker with full CRUD + dedicated detail routes (`/applications/[id]`)
-- ✅ Profile Page (manual input + résumé ingestion via PDF/Docx upload)
-- ✅ Job Match Analysis (AI-powered insights before document generation)
-- ✅ Résumé & Cover Letter Generator (RAG workflow via n8n, accessible in-context and standalone)
-- ✅ Clean UI/UX with Tailwind v4 + shadcn/ui + Lucide icons
+- ✅ **Landing Page with Try-Out Mode** - Allow visitors to test resume generation without signup
+- ✅ **Authentication System** - Email/password + OAuth (Google, GitHub) with Supabase Auth
+- ✅ **Onboarding Flow** - Multi-stage with optional resume upload + AI parsing
+- ✅ **Profile Management** - Full CRUD with rich data structures (arrays for technologies, achievements, etc.)
+- ✅ **Job Application Tracker** - Full CRUD interface with dedicated detail pages
+- ✅ **AI Job Match Analysis** - Analyze profile vs. job requirements with scoring + insights
+- ✅ **AI Resume Generation** - Tailored resumes using LaTeX templates + OpenAI content
+- ✅ **AI Cover Letter Generation** - Personalized cover letters
+- ✅ **Preview Functionality** - Review generated documents before saving
+- ✅ **Document Management** - Store, view, download generated documents
+- ✅ **Dashboard** - Stats overview + recent applications + quick actions
+- ✅ **Clean UI/UX** - Tailwind CSS v4 + shadcn/ui + Lucide icons
 
 ### Technical Implementation
-- ✅ Next.js 15 App Router with dynamic routes
-- ✅ Supabase integration (Auth, Database, Storage)
-- ✅ n8n workflows for AI processing (resume parsing, job matching, document generation)
-- ✅ Modal-based interactions for CRUD operations
-- ✅ README.md with enhanced architecture documentation
+- ✅ **Next.js 15** App Router with Server Components + dynamic routes
+- ✅ **Supabase** Auth, Database (PostgreSQL + RLS), Storage, Edge Functions
+- ✅ **OpenAI Integration** GPT-4o for parsing, analysis, content generation
+- ✅ **LaTeX Document Generation** Template injection with Mustache + cloud compilation
+- ✅ **TypeScript** Full type safety across stack
+- ✅ **React Context API** Data caching for Dashboard, Profile, Applications
+- ✅ **Modal-based Interactions** CRUD operations, preview, generation
+- ✅ **Comprehensive Documentation** This README with architecture details
 
 ### Route Structure
 ```
