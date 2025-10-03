@@ -33,8 +33,17 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = async () => {
     try {
+      // Check if user has a valid session first
+      const session = await authHelpers.getSession();
+      if (!session) {
+        setProfileData(null);
+        setIsLoading(false);
+        return;
+      }
+
       const user = await authHelpers.getCurrentUser();
       if (!user) {
+        setProfileData(null);
         setIsLoading(false);
         return;
       }
@@ -45,7 +54,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         .eq("user_id", user.id)
         .single();
 
-      if (error) {
+      // If no profile exists yet (PGRST116), that's okay for new users
+      if (error && error.code !== 'PGRST116') {
         console.error("Error loading profile:", error);
         setIsLoading(false);
         return;
@@ -67,6 +77,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           linkedin: data.linkedin_url || "",
           github: data.github_url || "",
           portfolio: data.portfolio_url || "",
+        });
+      } else {
+        // New user with no profile yet - set default empty profile
+        setProfileData({
+          firstName: "",
+          middleName: "",
+          lastName: "",
+          suffix: "",
+          email: user.email || "",
+          phone: "",
+          location: "",
+          bio: "",
+          linkedin: "",
+          github: "",
+          portfolio: "",
         });
       }
     } catch (error) {

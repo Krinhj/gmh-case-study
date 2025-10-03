@@ -316,10 +316,10 @@ export default function ApplicationsPage() {
 
           {/* Applications Grid */}
           {!isLoading && filteredApplications.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
               {filteredApplications.map((application) => (
-                <Card key={application.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
+                <Card key={application.id} className="hover:shadow-lg transition-shadow flex flex-col h-full">
+                  <CardHeader className="flex-shrink-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-lg mb-1 flex items-center gap-2">
@@ -329,16 +329,14 @@ export default function ApplicationsPage() {
                         <p className="text-sm text-muted-foreground mb-1">
                           {application.role}
                         </p>
-                        {/* Location and Work Mode directly below Role */}
-                        {(application.location || application.work_mode) && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            {application.location && <span>{application.location}</span>}
-                            {application.location && application.work_mode && <span>•</span>}
-                            {application.work_mode && (
-                              <span className="capitalize">{application.work_mode}</span>
-                            )}
-                          </div>
-                        )}
+                        {/* Location and Work Mode directly below Role - always reserve space */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-h-[20px]">
+                          {application.location && <span>{application.location}</span>}
+                          {application.location && application.work_mode && <span>•</span>}
+                          {application.work_mode && (
+                            <span className="capitalize">{application.work_mode}</span>
+                          )}
+                        </div>
                       </div>
                       <Badge
                         variant="outline"
