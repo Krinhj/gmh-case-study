@@ -1478,18 +1478,19 @@ export async function POST(request: Request) {
 **Function Logic:**
 
 1. **Fetch user profile data from Supabase**
-   - Query all profile tables: `profiles`, `work_experience`, `education`, `projects`, `skills`
+   - Query all profile tables: `personal_info`, `work_experience`, `education`, `projects`, `skills`
    - Combine into structured profile object
-   - Include rich array data (technologies, achievements, responsibilities, etc.)
+   - Include rich array data (skills, achievements, responsibilities, key_features, etc.)
 
 2. **Fetch job application data**
    - Query `job_applications` table for job posting details
-   - Extract: company, role, job_description, required_skills, preferred_skills, responsibilities, qualifications
+   - Extract: company, role, location, work_mode, industry, job_description, job_requirements, job_responsibilities
+   - Validate minimum required data (job_description or job_requirements must be present)
 
 3. **Format data for OpenAI prompt**
-   - Convert profile arrays into readable format
-   - Structure job requirements clearly
-   - Prepare comprehensive context
+   - Convert profile arrays into readable format with bullet points
+   - Structure job requirements clearly with labeled sections
+   - Prepare comprehensive context including all available profile data
 
 4. **Call OpenAI API to analyze match**
    - **Model:** `gpt-4o`
@@ -1574,31 +1575,63 @@ export async function POST(request: Request) {
 ```
 
 **Error Handling:**
-- Retry OpenAI calls up to 2 times with exponential backoff
-- If profile data incomplete, return warning in recommendations
-- Graceful degradation if optional fields missing
+- Returns 400 error if job description and requirements are both missing
+- Validates match_score is between 0-100 (clamps if necessary)
+- Logs errors for debugging
+- Returns user-friendly error messages
+- Gracefully handles missing optional profile fields
+
+**Implementation Details:**
+- **Automatic Trigger:** Match analysis runs automatically when user saves a job application
+- **UI Integration:** Match score displayed as color-coded badge in application cards
+  - 🟢 Green (80-100%): Strong match
+  - 🟡 Yellow (50-79%): Medium match
+  - 🔴 Red (0-49%): Low match
+- **Match Insights Storage:** Full analysis stored in `match_insights` JSONB field
+- **Re-analysis:** Users can trigger re-analysis from application detail page
 
 **Next.js API Route Wrapper:**
 ```typescript
 // app/api/analyze-match/route.ts
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { job_application_id } = await request.json();
+
+  // Verify job application belongs to user
+  const { data: jobApp } = await supabase
+    .from("job_applications")
+    .select("id, user_id")
+    .eq("id", job_application_id)
+    .single();
+
+  if (jobApp.user_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   // Call Edge Function
   const { data, error } = await supabase.functions.invoke('analyze-job-match', {
     body: { user_id: user.id, job_application_id }
   });
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error || !data.success) {
+    return NextResponse.json({ error: error?.message || data.error }, { status: 500 });
+  }
 
-  return Response.json(data);
+  return NextResponse.json({ success: true, data: data.data });
 }
 ```
+
+**User Flow:**
+1. User adds/edits job application with job description
+2. On save → API automatically calls `/api/analyze-match`
+3. Edge Function analyzes match → Updates database
+4. UI displays match score badge immediately
+5. User can view detailed insights in Match Analysis tab
+6. User can click "Re-analyze" to update score after profile changes
 
 ---
 

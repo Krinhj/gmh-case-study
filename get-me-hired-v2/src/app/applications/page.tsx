@@ -21,7 +21,8 @@ import {
   Trash2,
   TrendingUp,
   Briefcase,
-  Filter
+  Filter,
+  RefreshCw
 } from "lucide-react";
 
 type JobApplication = {
@@ -63,6 +64,7 @@ export default function ApplicationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadApplications = async () => {
@@ -213,6 +215,56 @@ export default function ApplicationsPage() {
     }
   };
 
+  const handleAnalyzeMatch = async (applicationId: string) => {
+    if (!userId) return;
+
+    setAnalyzingId(applicationId);
+    toast.loading("Analyzing match score...", { id: `analyzing-${applicationId}` });
+
+    try {
+      // Call Edge Function directly
+      const { data, error } = await supabase.functions.invoke('analyze-job-match', {
+        body: {
+          user_id: userId,
+          job_application_id: applicationId,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to analyze match");
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || "Match analysis failed");
+      }
+
+      // Refresh applications to get updated match score
+      const { data: updatedApp } = await supabase
+        .from("job_applications")
+        .select("*")
+        .eq("id", applicationId)
+        .single();
+
+      if (updatedApp) {
+        const updatedApps = applications.map((app) =>
+          app.id === applicationId ? updatedApp : app
+        );
+        setApplications(updatedApps);
+        setFilteredApplications(updatedApps);
+
+        const cacheKey = `job_applications_${userId}`;
+        localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
+      }
+
+      toast.success(`Match score: ${data.data.match_score}%`, { id: `analyzing-${applicationId}` });
+    } catch (error: any) {
+      console.error("Error analyzing match:", error);
+      toast.error(error.message || "Failed to analyze match", { id: `analyzing-${applicationId}` });
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -360,7 +412,23 @@ export default function ApplicationsPage() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Match Score</span>
-                            <span className="font-semibold">{application.match_score}%</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{application.match_score}%</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0"
+                                onClick={() => handleAnalyzeMatch(application.id)}
+                                disabled={analyzingId === application.id}
+                                title="Re-calculate match score"
+                              >
+                                {analyzingId === application.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <div
