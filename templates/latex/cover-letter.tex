@@ -1,0 +1,57 @@
+%-------------------------
+% ATS-Optimized Cover Letter Template
+% Template uses Mustache syntax for dynamic content injection
+%-------------------------
+
+\documentclass[11pt,letterpaper]{letter}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{times}
+
+% Set margins
+\geometry{
+  top=1in,
+  bottom=1in,
+  left=1in,
+  right=1in
+}
+
+% Remove page numbers
+\pagestyle{empty}
+
+% Sender information
+\signature{ {{name}} }
+\address{
+  {{name}} \\
+  {{location}} \\
+  {{phone}} \\
+  \href{mailto:{{email}} }{ {{email}} }
+}
+
+\begin{document}
+
+% Recipient information
+\begin{letter}{
+  {{#hiring_manager}}{{hiring_manager}}{{/hiring_manager}}{{^hiring_manager}}Hiring Manager{{/hiring_manager}} \\
+  {{company}} \\
+  {{#company_address}}{{company_address}}{{/company_address}}
+}
+
+% Opening salutation
+\opening{ {{salutation}}, }
+
+% Letter body (paragraphs from OpenAI)
+{{#paragraphs}}
+{{.}}
+
+{{/paragraphs}}
+
+% Closing
+\closing{Sincerely,}
+
+\end{letter}
+
+\end{document}

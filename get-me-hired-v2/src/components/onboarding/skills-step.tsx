@@ -17,7 +17,6 @@ import {
 type Skill = {
   name: string;
   category: string;
-  proficiencyLevel: string;
 };
 
 type SkillsStepProps = {
@@ -30,23 +29,15 @@ type SkillsStepProps = {
 
 const SKILL_CATEGORIES = [
   { value: "technical", label: "Technical", icon: Code },
-  { value: "soft_skill", label: "Soft Skill", icon: Lightbulb },
+  { value: "soft", label: "Soft Skill", icon: Lightbulb },
   { value: "language", label: "Language", icon: Languages },
   { value: "tool", label: "Tool/Software", icon: Wrench },
-];
-
-const PROFICIENCY_LEVELS = [
-  { value: "beginner", label: "Beginner" },
-  { value: "intermediate", label: "Intermediate" },
-  { value: "advanced", label: "Advanced" },
-  { value: "expert", label: "Expert" },
 ];
 
 export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: SkillsStepProps) {
   const [skills, setSkills] = useState<Skill[]>(data);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillCategory, setNewSkillCategory] = useState("technical");
-  const [newSkillProficiency, setNewSkillProficiency] = useState("intermediate");
 
   const addSkill = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -55,7 +46,6 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
     const skill: Skill = {
       name: newSkillName.trim(),
       category: newSkillCategory,
-      proficiencyLevel: newSkillProficiency,
     };
 
     const updated = [...skills, skill];
@@ -65,7 +55,6 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
     // Reset form
     setNewSkillName("");
     setNewSkillCategory("technical");
-    setNewSkillProficiency("intermediate");
   };
 
   const removeSkill = (index: number) => {
@@ -107,74 +96,54 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
       <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
         <Label>Add a Skill</Label>
 
-        <div className="grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="skillName">Skill Name</Label>
-              <Input
-                id="skillName"
-                placeholder="e.g., JavaScript, Leadership, Spanish"
-                value={newSkillName}
-                onChange={(e) => setNewSkillName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkill();
-                  }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="skillCategory">Category</Label>
-              <Select value={newSkillCategory} onValueChange={setNewSkillCategory}>
-                <SelectTrigger id="skillCategory">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SKILL_CATEGORIES.map((cat) => {
-                    const Icon = cat.icon;
-                    return (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {cat.label}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="skillName">Skill Name</Label>
+            <Input
+              id="skillName"
+              placeholder="e.g., JavaScript, Leadership, Spanish"
+              value={newSkillName}
+              onChange={(e) => setNewSkillName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addSkill();
+                }
+              }}
+            />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="skillProficiency">Proficiency Level (Optional)</Label>
-              <Select value={newSkillProficiency} onValueChange={setNewSkillProficiency}>
-                <SelectTrigger id="skillProficiency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFICIENCY_LEVELS.map((level) => (
-                    <SelectItem key={level.value} value={level.value}>
-                      {level.label}
+          <div className="space-y-2">
+            <Label htmlFor="skillCategory">Category</Label>
+            <Select value={newSkillCategory} onValueChange={setNewSkillCategory}>
+              <SelectTrigger id="skillCategory">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SKILL_CATEGORIES.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        {cat.label}
+                      </div>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="flex items-end">
-              <Button
-                type="button"
-                onClick={() => addSkill()}
-                disabled={!newSkillName.trim()}
-                className="w-full"
-              >
-                Add Skill
-              </Button>
-            </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              onClick={() => addSkill()}
+              disabled={!newSkillName.trim()}
+              className="w-full"
+            >
+              Add Skill
+            </Button>
           </div>
         </div>
       </div>
@@ -217,11 +186,6 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
                         className="gap-1 pr-1 pl-3 py-1.5"
                       >
                         <span className="text-sm">{skill.name}</span>
-                        {skill.proficiencyLevel && (
-                          <span className="text-xs opacity-70">
-                            • {skill.proficiencyLevel}
-                          </span>
-                        )}
                         <button
                           type="button"
                           onClick={() => removeSkill(skillIndex)}

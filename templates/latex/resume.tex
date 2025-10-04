@@ -1,0 +1,196 @@
+%-------------------------
+% ATS-Optimized Resume Template
+% Based on Ronnie Talabucon Jr.'s Resume
+% Template uses Mustache syntax for dynamic content injection
+%-------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+%----------FONT OPTIONS----------
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+% Ensure that generated pdf is machine readable/ATS parsable
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{1.0\textwidth}{l@{\extracolsep{\fill}}r}
+      \textit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.01\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge \scshape {{name}}} \\ \vspace{1pt}
+    \small
+    {{#location}}\faMapMarker* \hspace{1pt} {{location}} $|$ {{/location}}
+    {{#phone}}\faPhone* \hspace{1pt} {{phone}} $|$ {{/phone}}
+    {{#email}}\href{mailto:{{email}}}{\faEnvelope \hspace{1pt} {{email}}}{{/email}}
+    {{#github}} $|$ \href{ {{github}} }{\faGithub \hspace{1pt} GitHub}{{/github}}
+    {{#portfolio}} $|$ \href{ {{portfolio}} }{\faGlobe \hspace{1pt} Portfolio}{{/portfolio}}
+    {{#linkedin}} $|$ \href{ {{linkedin}} }{\faLinkedin \hspace{1pt} LinkedIn}{{/linkedin}}
+    \vspace{-8pt}
+\end{center}
+
+%-----------PROFESSIONAL SUMMARY-----------
+\section{Professional Summary}
+\small{
+{{professional_summary}}
+}
+\vspace{-5pt}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    {{#education}}
+    \resumeSubheading
+      { {{institution}} }{ {{dates}} }
+      { {{degree}} in {{field}} }{ {{location}} }
+      {{#gpa}}
+      \resumeItemListStart
+        \resumeItem{GPA: {{gpa}}}
+      \resumeItemListEnd
+      {{/gpa}}
+      {{#relevant_coursework}}
+      \resumeItemListStart
+        \resumeItem{\textbf{Relevant Coursework:} {{#relevant_coursework}}{{.}}, {{/relevant_coursework}}}
+      \resumeItemListEnd
+      {{/relevant_coursework}}
+      {{#honors}}
+      \resumeItemListStart
+        {{#honors}}
+        \resumeItem{ {{.}} }
+        {{/honors}}
+      \resumeItemListEnd
+      {{/honors}}
+    {{/education}}
+  \resumeSubHeadingListEnd
+\vspace{-10pt}
+
+%-----------EXPERIENCE-----------
+\section{Experience}
+  \resumeSubHeadingListStart
+    {{#experience}}
+    \resumeSubheading
+      { {{role}} }{ {{dates}} }
+      { {{company}} }{ {{location}} }
+      \resumeItemListStart
+        {{#bullets}}
+        \resumeItem{ {{.}} }
+        {{/bullets}}
+      \resumeItemListEnd
+    {{/experience}}
+  \resumeSubHeadingListEnd
+\vspace{-10pt}
+
+%-----------PROJECTS-----------
+\section{Projects}
+  \resumeSubHeadingListStart
+    {{#projects}}
+    \resumeProjectHeading
+      {\textbf{ {{name}} } $|$ \emph{ {{#technologies}}{{.}}, {{/technologies}} }}{}
+      \resumeItemListStart
+        {{#bullets}}
+        \resumeItem{ {{.}} }
+        {{/bullets}}
+      \resumeItemListEnd
+    {{/projects}}
+  \resumeSubHeadingListEnd
+\vspace{-10pt}
+
+%-----------TECHNICAL SKILLS-----------
+\section{Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     {{#skills.languages}}\textbf{Languages:} {{#skills.languages}}{{.}}, {{/skills.languages}} \\ {{/skills.languages}}
+     {{#skills.frameworks}}\textbf{Frameworks/Libraries:} {{#skills.frameworks}}{{.}}, {{/skills.frameworks}} \\ {{/skills.frameworks}}
+     {{#skills.tools}}\textbf{Tools \& Platforms:} {{#skills.tools}}{{.}}, {{/skills.tools}} \\ {{/skills.tools}}
+     {{#skills.ai_ml}}\textbf{AI/ML:} {{#skills.ai_ml}}{{.}}, {{/skills.ai_ml}}{{/skills.ai_ml}}
+    }}
+ \end{itemize}
+\vspace{-16pt}
+
+\end{document}

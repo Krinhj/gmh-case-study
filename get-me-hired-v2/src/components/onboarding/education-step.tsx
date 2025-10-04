@@ -18,7 +18,9 @@ type EducationEntry = {
   endDate: string;
   isCurrent: boolean;
   gpa: string;
-  description: string;
+  relevantCoursework: string[];
+  achievements: string[];
+  activities: string[];
 };
 
 type EducationStepProps = {
@@ -43,7 +45,9 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
       endDate: "",
       isCurrent: false,
       gpa: "",
-      description: "",
+      relevantCoursework: [],
+      achievements: [],
+      activities: [],
     };
     const updated = [...educationEntries, newEntry];
     setEducationEntries(updated);
@@ -70,7 +74,7 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">Education</h2>
         <p className="text-muted-foreground">
@@ -78,7 +82,7 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
         </p>
       </div>
 
-      {/* Education Entries */}
+      {/* Education Entries - Scrollable */}
       {educationEntries.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -89,7 +93,7 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2">
           {educationEntries.map((edu, index) => (
             <Card key={edu.id} className="p-6">
               <div className="space-y-4">
@@ -197,10 +201,15 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
                     id={`current-${edu.id}`}
                     checked={edu.isCurrent}
                     onCheckedChange={(checked) => {
-                      updateEducation(edu.id, "isCurrent", checked);
-                      if (checked) {
-                        updateEducation(edu.id, "endDate", "");
-                      }
+                      const isChecked = !!checked;
+                      // Update both isCurrent and endDate in a single state update
+                      const updated = educationEntries.map((e) =>
+                        e.id === edu.id
+                          ? { ...e, isCurrent: isChecked, endDate: isChecked ? "" : e.endDate }
+                          : e
+                      );
+                      setEducationEntries(updated);
+                      onUpdate(updated);
                     }}
                   />
                   <label
@@ -211,14 +220,45 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
                   </label>
                 </div>
 
-                {/* Description */}
+                {/* Relevant Coursework */}
                 <div className="space-y-2">
-                  <Label>Additional Details (Optional)</Label>
+                  <Label>Relevant Coursework (Optional)</Label>
                   <Textarea
-                    placeholder="Relevant coursework, honors, activities, achievements..."
-                    value={edu.description}
-                    onChange={(e) => updateEducation(edu.id, "description", e.target.value)}
+                    placeholder="Enter each course on a new line&#10;Data Structures & Algorithms&#10;Machine Learning&#10;Software Engineering"
+                    value={edu.relevantCoursework.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateEducation(edu.id, "relevantCoursework", lines);
+                    }}
                     className="min-h-[80px]"
+                  />
+                </div>
+
+                {/* Achievements */}
+                <div className="space-y-2">
+                  <Label>Achievements & Honors (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each achievement on a new line&#10;Dean's List (4.0 GPA)&#10;Best Thesis Award&#10;Academic Scholarship"
+                    value={edu.achievements.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateEducation(edu.id, "achievements", lines);
+                    }}
+                    className="min-h-[60px]"
+                  />
+                </div>
+
+                {/* Activities */}
+                <div className="space-y-2">
+                  <Label>Activities & Organizations (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each activity on a new line&#10;Computer Science Club President&#10;Hackathon Organizer&#10;Peer Tutor"
+                    value={edu.activities.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateEducation(edu.id, "activities", lines);
+                    }}
+                    className="min-h-[60px]"
                   />
                 </div>
               </div>

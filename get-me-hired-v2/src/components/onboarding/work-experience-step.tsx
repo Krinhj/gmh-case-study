@@ -16,7 +16,8 @@ type ExperienceEntry = {
   startDate: string;
   endDate: string;
   isCurrent: boolean;
-  description: string;
+  responsibilities: string[];
+  achievements: string[];
   location: string;
   skills: string[];
 };
@@ -41,7 +42,8 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
       startDate: "",
       endDate: "",
       isCurrent: false,
-      description: "",
+      responsibilities: [],
+      achievements: [],
       location: "",
       skills: [],
     };
@@ -70,7 +72,7 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">Work Experience</h2>
         <p className="text-muted-foreground">
@@ -78,7 +80,7 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
         </p>
       </div>
 
-      {/* Experience Entries */}
+      {/* Experience Entries - Scrollable */}
       {experiences.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -89,7 +91,7 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2">
           {experiences.map((exp, index) => (
             <Card key={exp.id} className="p-6">
               <div className="space-y-4">
@@ -192,10 +194,15 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
                     id={`current-${exp.id}`}
                     checked={exp.isCurrent}
                     onCheckedChange={(checked) => {
-                      updateExperience(exp.id, "isCurrent", checked);
-                      if (checked) {
-                        updateExperience(exp.id, "endDate", "");
-                      }
+                      const isChecked = !!checked;
+                      // Update both isCurrent and endDate in a single state update
+                      const updated = experiences.map((e) =>
+                        e.id === exp.id
+                          ? { ...e, isCurrent: isChecked, endDate: isChecked ? "" : e.endDate }
+                          : e
+                      );
+                      setExperiences(updated);
+                      onUpdate(updated);
                     }}
                   />
                   <label
@@ -206,17 +213,20 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
                   </label>
                 </div>
 
-                {/* Description */}
+                {/* Responsibilities */}
                 <div className="space-y-2">
-                  <Label>Job Description</Label>
+                  <Label>Responsibilities & Achievements</Label>
                   <Textarea
-                    placeholder="Describe your responsibilities, achievements, and impact..."
-                    value={exp.description}
-                    onChange={(e) => updateExperience(exp.id, "description", e.target.value)}
-                    className="min-h-[100px]"
+                    placeholder="Enter each responsibility or achievement on a new line&#10;Led team of 5 developers&#10;Increased performance by 40%&#10;Implemented CI/CD pipeline"
+                    value={exp.responsibilities.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateExperience(exp.id, "responsibilities", lines);
+                    }}
+                    className="min-h-[120px]"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use bullet points or short paragraphs. Focus on achievements and quantifiable results.
+                    Enter one responsibility or achievement per line. Focus on impact and quantifiable results.
                   </p>
                 </div>
               </div>

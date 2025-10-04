@@ -13,11 +13,15 @@ type ProjectEntry = {
   id: string;
   name: string;
   description: string;
-  url: string;
+  projectUrl: string;
+  githubUrl: string;
   startDate: string;
   endDate: string;
   isCurrent: boolean;
   skills: string[];
+  keyFeatures: string[];
+  achievements: string[];
+  roleResponsibilities: string[];
 };
 
 type ProjectsStepProps = {
@@ -37,11 +41,15 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
       id: crypto.randomUUID(),
       name: "",
       description: "",
-      url: "",
+      projectUrl: "",
+      githubUrl: "",
       startDate: "",
       endDate: "",
       isCurrent: false,
       skills: [],
+      keyFeatures: [],
+      achievements: [],
+      roleResponsibilities: [],
     };
     const updated = [...projects, newProject];
     setProjects(updated);
@@ -68,7 +76,7 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">Projects</h2>
         <p className="text-muted-foreground">
@@ -76,7 +84,7 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
         </p>
       </div>
 
-      {/* Project Entries */}
+      {/* Project Entries - Scrollable */}
       {projects.length === 0 ? (
         <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <FolderKanban className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -87,7 +95,7 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto max-h-[500px] pr-2">
           {projects.map((project, index) => (
             <Card key={project.id} className="p-6">
               <div className="space-y-4">
@@ -127,15 +135,30 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
                     <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="url"
-                      placeholder="https://github.com/username/project"
-                      value={project.url}
-                      onChange={(e) => updateProject(project.id, "url", e.target.value)}
+                      placeholder="https://myproject.com"
+                      value={project.projectUrl}
+                      onChange={(e) => updateProject(project.id, "projectUrl", e.target.value)}
                       className="pl-10"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    GitHub repo, live demo, or portfolio link
+                    Live demo or portfolio link
                   </p>
+                </div>
+
+                {/* GitHub URL */}
+                <div className="space-y-2">
+                  <Label>GitHub URL (Optional)</Label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="url"
+                      placeholder="https://github.com/username/project"
+                      value={project.githubUrl}
+                      onChange={(e) => updateProject(project.id, "githubUrl", e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
 
                 {/* Dates */}
@@ -174,10 +197,15 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
                     id={`current-${project.id}`}
                     checked={project.isCurrent}
                     onCheckedChange={(checked) => {
-                      updateProject(project.id, "isCurrent", checked);
-                      if (checked) {
-                        updateProject(project.id, "endDate", "");
-                      }
+                      const isChecked = !!checked;
+                      // Update both isCurrent and endDate in a single state update
+                      const updated = projects.map((p) =>
+                        p.id === project.id
+                          ? { ...p, isCurrent: isChecked, endDate: isChecked ? "" : p.endDate }
+                          : p
+                      );
+                      setProjects(updated);
+                      onUpdate(updated);
                     }}
                   />
                   <label
@@ -192,15 +220,71 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
                 <div className="space-y-2">
                   <Label>Description *</Label>
                   <Textarea
-                    placeholder="What did you build? What problem does it solve? What technologies did you use?"
+                    placeholder="What did you build? What problem does it solve?"
                     value={project.description}
                     onChange={(e) => updateProject(project.id, "description", e.target.value)}
                     className="min-h-[100px]"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Highlight key features, your role, and the impact or results
+                    Provide a brief overview of the project
                   </p>
+                </div>
+
+                {/* Key Features */}
+                <div className="space-y-2">
+                  <Label>Key Features (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each feature on a new line&#10;User authentication with OAuth&#10;Real-time notifications&#10;Responsive mobile design"
+                    value={project.keyFeatures.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateProject(project.id, "keyFeatures", lines);
+                    }}
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                {/* Role & Responsibilities */}
+                <div className="space-y-2">
+                  <Label>Role & Responsibilities (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each responsibility on a new line&#10;Led frontend development&#10;Designed database schema&#10;Implemented API endpoints"
+                    value={project.roleResponsibilities.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateProject(project.id, "roleResponsibilities", lines);
+                    }}
+                    className="min-h-[80px]"
+                  />
+                </div>
+
+                {/* Achievements */}
+                <div className="space-y-2">
+                  <Label>Achievements & Impact (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each achievement on a new line&#10;Reduced load time by 60%&#10;Gained 10,000+ active users&#10;Won Best Project Award"
+                    value={project.achievements.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateProject(project.id, "achievements", lines);
+                    }}
+                    className="min-h-[60px]"
+                  />
+                </div>
+
+                {/* Skills/Technologies Used */}
+                <div className="space-y-2">
+                  <Label>Technologies & Skills Used (Optional)</Label>
+                  <Textarea
+                    placeholder="Enter each technology/skill on a new line&#10;React&#10;Node.js&#10;PostgreSQL"
+                    value={project.skills.join('\n')}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n').filter(line => line.trim().length > 0);
+                      updateProject(project.id, "skills", lines);
+                    }}
+                    className="min-h-[60px]"
+                  />
                 </div>
               </div>
             </Card>

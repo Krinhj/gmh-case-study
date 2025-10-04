@@ -43,6 +43,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ProfileData = {
   firstName: string;
@@ -66,7 +83,7 @@ type ExperienceEntry = {
   end_date: string;
   responsibilities: string[];
   achievements: string[];
-  technologies: string[];
+  skills: string[];
   location: string;
   is_current: boolean;
 };
@@ -90,7 +107,8 @@ type Project = {
   name: string;
   description: string;
   project_url: string;
-  technologies: string[];
+  github_url?: string;
+  skills: string[];
   key_features: string[];
   achievements: string[];
   role_responsibilities: string[];
@@ -143,6 +161,10 @@ export default function ProfilePage() {
   const [showSkillDialog, setShowSkillDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
+  // Delete confirmation states
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'experience' | 'education' | 'project' | 'skill' } | null>(null);
+
   // New item states
   const [newExperience, setNewExperience] = useState<ExperienceEntry>({
     company: "",
@@ -151,7 +173,7 @@ export default function ProfilePage() {
     end_date: "",
     responsibilities: [],
     achievements: [],
-    technologies: [],
+    skills: [],
     location: "",
     is_current: false,
   });
@@ -173,7 +195,7 @@ export default function ProfilePage() {
     name: "",
     description: "",
     project_url: "",
-    technologies: [],
+    skills: [],
     key_features: [],
     achievements: [],
     role_responsibilities: [],
@@ -261,7 +283,14 @@ export default function ProfilePage() {
       .order("start_date", { ascending: false });
 
     if (!error && data) {
-      setExperiences(data);
+      // Convert null values to empty strings for controlled inputs
+      const sanitizedData = data.map(exp => ({
+        ...exp,
+        start_date: exp.start_date || "",
+        end_date: exp.end_date || "",
+        location: exp.location || "",
+      }));
+      setExperiences(sanitizedData);
     } else if (error) {
       console.error("Error loading experiences:", error);
     }
@@ -275,7 +304,15 @@ export default function ProfilePage() {
       .order("start_date", { ascending: false });
 
     if (!error && data) {
-      setEducation(data);
+      // Convert null values to empty strings for controlled inputs
+      const sanitizedData = data.map(edu => ({
+        ...edu,
+        start_date: edu.start_date || "",
+        end_date: edu.end_date || "",
+        field_of_study: edu.field_of_study || "",
+        gpa: edu.gpa || "",
+      }));
+      setEducation(sanitizedData);
     } else if (error) {
       console.error("Error loading education:", error);
     }
@@ -289,7 +326,16 @@ export default function ProfilePage() {
       .order("start_date", { ascending: false, nullsFirst: false });
 
     if (!error && data) {
-      setProjects(data);
+      // Convert null values to empty strings for controlled inputs
+      const sanitizedData = data.map(proj => ({
+        ...proj,
+        start_date: proj.start_date || "",
+        end_date: proj.end_date || "",
+        project_url: proj.project_url || "",
+        github_url: proj.github_url || "",
+        description: proj.description || "",
+      }));
+      setProjects(sanitizedData);
     }
   };
 
@@ -393,7 +439,7 @@ export default function ProfilePage() {
       end_date: "",
       responsibilities: [],
       achievements: [],
-      technologies: [],
+      skills: [],
       location: "",
       is_current: false,
     });
@@ -423,7 +469,7 @@ export default function ProfilePage() {
         end_date: newExperience.is_current ? null : (newExperience.end_date || null),
         responsibilities: newExperience.responsibilities || [],
         achievements: newExperience.achievements || [],
-        technologies: newExperience.technologies || [],
+        skills: newExperience.skills || [],
         location: newExperience.location,
         is_current: newExperience.is_current,
       };
@@ -458,7 +504,7 @@ export default function ProfilePage() {
         end_date: "",
         responsibilities: [],
         achievements: [],
-        technologies: [],
+        skills: [],
         location: "",
         is_current: false,
       });
@@ -468,6 +514,60 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error saving experience:", error);
       toast.error("Failed to save experience");
+    }
+  };
+
+  // Delete confirmation handler
+  const openDeleteConfirmation = (id: string, type: 'experience' | 'education' | 'project' | 'skill') => {
+    setItemToDelete({ id, type });
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete || !userId) return;
+
+    const { id, type } = itemToDelete;
+
+    try {
+      let error;
+      switch (type) {
+        case 'experience':
+          ({ error } = await supabase.from("work_experience").delete().eq("id", id));
+          if (!error) {
+            toast.success("Experience deleted successfully!");
+            await loadExperiences(userId);
+          }
+          break;
+        case 'education':
+          ({ error } = await supabase.from("education").delete().eq("id", id));
+          if (!error) {
+            toast.success("Education deleted successfully!");
+            await loadEducation(userId);
+          }
+          break;
+        case 'project':
+          ({ error } = await supabase.from("projects").delete().eq("id", id));
+          if (!error) {
+            toast.success("Project deleted successfully!");
+            await loadProjects(userId);
+          }
+          break;
+        case 'skill':
+          ({ error } = await supabase.from("skills").delete().eq("id", id));
+          if (!error) {
+            toast.success("Skill deleted successfully!");
+            await loadSkills(userId);
+          }
+          break;
+      }
+
+      if (error) throw error;
+    } catch (error) {
+      console.error(`Error deleting ${itemToDelete.type}:`, error);
+      toast.error(`Failed to delete ${itemToDelete.type}`);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -499,7 +599,7 @@ export default function ProfilePage() {
       end_date: "",
       responsibilities: [],
       achievements: [],
-      technologies: [],
+      skills: [],
       location: "",
       is_current: false,
     });
@@ -641,7 +741,7 @@ export default function ProfilePage() {
       name: "",
       description: "",
       project_url: "",
-      technologies: [],
+      skills: [],
       key_features: [],
       achievements: [],
       role_responsibilities: [],
@@ -674,7 +774,7 @@ export default function ProfilePage() {
         name: newProject.name,
         description: newProject.description || null,
         project_url: newProject.project_url || null,
-        technologies: newProject.technologies || [],
+        skills: newProject.skills || [],
         key_features: newProject.key_features || [],
         achievements: newProject.achievements || [],
         role_responsibilities: newProject.role_responsibilities || [],
@@ -707,7 +807,7 @@ export default function ProfilePage() {
         name: "",
         description: "",
         project_url: "",
-        technologies: [],
+        skills: [],
         key_features: [],
         achievements: [],
         role_responsibilities: [],
@@ -750,7 +850,7 @@ export default function ProfilePage() {
       name: "",
       description: "",
       project_url: "",
-      technologies: [],
+      skills: [],
       key_features: [],
       achievements: [],
       role_responsibilities: [],
@@ -809,7 +909,16 @@ export default function ProfilePage() {
       await loadSkills(userId);
       setShowSkillDialog(false);
     } catch (error) {
-      console.error("Error saving skill:", error);
+      console.error("Error saving skill (raw):", error);
+      console.error("Error saving skill (stringified):", JSON.stringify(error, null, 2));
+      if (error && typeof error === 'object') {
+        console.error('Error properties:', {
+          message: (error as any).message,
+          code: (error as any).code,
+          details: (error as any).details,
+          hint: (error as any).hint,
+        });
+      }
       toast.error("Failed to save skill");
     }
   };
@@ -1148,14 +1257,18 @@ export default function ProfilePage() {
                                 )}
                               </div>
 
-                              {/* Responsibilities */}
+                              {/* Responsibilities & Achievements */}
                               {exp.responsibilities && exp.responsibilities.length > 0 && (
                                 <div className="mt-3">
-                                  <p className="text-sm font-medium mb-1">Responsibilities:</p>
+                                  <p className="text-sm font-medium mb-1">Responsibilities & Achievements:</p>
                                   <ul className="text-sm space-y-1 list-disc list-inside">
-                                    {exp.responsibilities.map((resp, idx) => (
-                                      <li key={idx}>{resp}</li>
-                                    ))}
+                                    {exp.responsibilities.map((resp, idx) => {
+                                      // Remove bullet if already present (smart detection)
+                                      const cleanedResp = resp.trim().startsWith('•')
+                                        ? resp.trim().substring(1).trim()
+                                        : resp;
+                                      return <li key={idx}>{cleanedResp}</li>;
+                                    })}
                                   </ul>
                                 </div>
                               )}
@@ -1173,11 +1286,11 @@ export default function ProfilePage() {
                               )}
 
                               {/* Technologies */}
-                              {exp.technologies && exp.technologies.length > 0 && (
+                              {exp.skills && exp.skills.length > 0 && (
                                 <div className="mt-3">
                                   <p className="text-sm font-medium mb-1">Technologies:</p>
                                   <div className="flex flex-wrap gap-1">
-                                    {exp.technologies.map((tech, idx) => (
+                                    {exp.skills.map((tech, idx) => (
                                       <Badge key={idx} variant="outline" className="text-xs">
                                         {tech}
                                       </Badge>
@@ -1197,7 +1310,7 @@ export default function ProfilePage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => exp.id && handleDeleteExperience(exp.id)}
+                                onClick={() => exp.id && openDeleteConfirmation(exp.id, 'experience')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1307,7 +1420,7 @@ export default function ProfilePage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => edu.id && handleDeleteEducation(edu.id)}
+                                onClick={() => edu.id && openDeleteConfirmation(edu.id, 'education')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1376,11 +1489,11 @@ export default function ProfilePage() {
                               )}
 
                               {/* Technologies */}
-                              {proj.technologies && proj.technologies.length > 0 && (
+                              {proj.skills && proj.skills.length > 0 && (
                                 <div className="mt-3">
                                   <p className="text-sm font-medium mb-1">Technologies:</p>
                                   <div className="flex flex-wrap gap-1">
-                                    {proj.technologies.map((tech, idx) => (
+                                    {proj.skills.map((tech, idx) => (
                                       <Badge key={idx} variant="outline" className="text-xs">{tech}</Badge>
                                     ))}
                                   </div>
@@ -1434,7 +1547,7 @@ export default function ProfilePage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => proj.id && handleDeleteProject(proj.id)}
+                                onClick={() => proj.id && openDeleteConfirmation(proj.id, 'project')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1506,7 +1619,7 @@ export default function ProfilePage() {
                                     variant="ghost"
                                     size="sm"
                                     className="h-4 w-4 p-0 hover:bg-transparent"
-                                    onClick={() => skill.id && handleDeleteSkill(skill.id)}
+                                    onClick={() => skill.id && openDeleteConfirmation(skill.id, 'skill')}
                                   >
                                     <X className="h-3 w-3" />
                                   </Button>
@@ -1720,7 +1833,7 @@ export default function ProfilePage() {
               <Label>Technologies Used</Label>
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {newExperience.technologies.map((tech, index) => (
+                  {newExperience.skills.map((tech, index) => (
                     <Badge key={index} variant="secondary" className="px-2 py-1">
                       {tech}
                       <Button
@@ -1729,9 +1842,9 @@ export default function ProfilePage() {
                         size="sm"
                         className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
                         onClick={() => {
-                          const updated = [...newExperience.technologies];
+                          const updated = [...newExperience.skills];
                           updated.splice(index, 1);
-                          setNewExperience({ ...newExperience, technologies: updated });
+                          setNewExperience({ ...newExperience, skills: updated });
                         }}
                       >
                         <X className="h-3 w-3" />
@@ -1749,7 +1862,7 @@ export default function ProfilePage() {
                         e.preventDefault();
                         setNewExperience({
                           ...newExperience,
-                          technologies: [...newExperience.technologies, tempTechnology.trim()]
+                          skills: [...newExperience.skills, tempTechnology.trim()]
                         });
                         setTempTechnology("");
                       }
@@ -1763,7 +1876,7 @@ export default function ProfilePage() {
                       if (tempTechnology.trim()) {
                         setNewExperience({
                           ...newExperience,
-                          technologies: [...newExperience.technologies, tempTechnology.trim()]
+                          skills: [...newExperience.skills, tempTechnology.trim()]
                         });
                         setTempTechnology("");
                       }
@@ -2088,17 +2201,17 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label>Technologies Used</Label>
               <div className="space-y-2">
-                {newProject.technologies && newProject.technologies.length > 0 && (
+                {newProject.skills && newProject.skills.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {newProject.technologies.map((tech, index) => (
+                    {newProject.skills.map((tech, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {tech}
                         <button
                           type="button"
                           onClick={() => {
-                            const updated = [...newProject.technologies];
+                            const updated = [...newProject.skills];
                             updated.splice(index, 1);
-                            setNewProject({ ...newProject, technologies: updated });
+                            setNewProject({ ...newProject, skills: updated });
                           }}
                           className="ml-1 hover:text-destructive"
                         >
@@ -2118,7 +2231,7 @@ export default function ProfilePage() {
                         e.preventDefault();
                         setNewProject({
                           ...newProject,
-                          technologies: [...newProject.technologies, tempProjectTech.trim()]
+                          skills: [...newProject.skills, tempProjectTech.trim()]
                         });
                         setTempProjectTech("");
                       }
@@ -2132,7 +2245,7 @@ export default function ProfilePage() {
                       if (tempProjectTech.trim()) {
                         setNewProject({
                           ...newProject,
-                          technologies: [...newProject.technologies, tempProjectTech.trim()]
+                          skills: [...newProject.skills, tempProjectTech.trim()]
                         });
                         setTempProjectTech("");
                       }
@@ -2378,17 +2491,20 @@ export default function ProfilePage() {
 
             <div className="space-y-2">
               <Label htmlFor="skill-category">Category *</Label>
-              <select
-                id="skill-category"
+              <Select
                 value={newSkill.category}
-                onChange={(e) => setNewSkill({ ...newSkill, category: e.target.value })}
-                className="w-full px-3 py-2 border rounded-md"
+                onValueChange={(value) => setNewSkill({ ...newSkill, category: value })}
               >
-                <option value="technical">Technical</option>
-                <option value="soft">Soft Skill</option>
-                <option value="language">Language</option>
-                <option value="tool">Tool</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="soft">Soft Skill</SelectItem>
+                  <SelectItem value="language">Language</SelectItem>
+                  <SelectItem value="tool">Tool</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -2401,6 +2517,36 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {itemToDelete?.type === 'experience' &&
+                "This will permanently delete this work experience entry. This action cannot be undone."}
+              {itemToDelete?.type === 'education' &&
+                "This will permanently delete this education entry. This action cannot be undone."}
+              {itemToDelete?.type === 'project' &&
+                "This will permanently delete this project entry. This action cannot be undone."}
+              {itemToDelete?.type === 'skill' &&
+                "This will permanently delete this skill. This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteConfirmOpen(false);
+              setItemToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
