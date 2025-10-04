@@ -8,6 +8,7 @@ import Image from "next/image";
 import { authHelpers } from "@/lib/auth";
 import { saveOnboardingData } from "@/lib/onboarding";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 // Import step components (we'll create these next)
 import { PersonalInfoStep } from "@/components/onboarding/personal-info-step";
@@ -16,6 +17,7 @@ import { EducationStep } from "@/components/onboarding/education-step";
 import { ProjectsStep } from "@/components/onboarding/projects-step";
 import { SkillsStep } from "@/components/onboarding/skills-step";
 import { OnboardingStepper } from "@/components/onboarding/onboarding-stepper";
+import { ResumeUploadStep } from "@/components/onboarding/resume-upload-step";
 
 export type OnboardingData = {
   personalInfo: {
@@ -38,9 +40,10 @@ export type OnboardingData = {
     startDate: string;
     endDate: string;
     isCurrent: boolean;
-    description: string;
+    responsibilities: string[]; // Changed from description
+    achievements: string[];
     location: string;
-    skills: string[];
+    skills: string[]; // Renamed from technologies
   }>;
   education: Array<{
     id: string;
@@ -51,26 +54,33 @@ export type OnboardingData = {
     endDate: string;
     isCurrent: boolean;
     gpa: string;
-    description: string;
+    relevantCoursework: string[]; // Added
+    achievements: string[]; // Added
+    activities: string[]; // Added
   }>;
   projects: Array<{
     id: string;
     name: string;
     description: string;
-    url: string;
+    projectUrl: string; // Renamed from url
+    githubUrl: string; // Added
     startDate: string;
     endDate: string;
     isCurrent: boolean;
-    skills: string[];
+    skills: string[]; // Renamed from technologies
+    keyFeatures: string[]; // Added
+    achievements: string[]; // Added
+    roleResponsibilities: string[]; // Added
   }>;
   skills: Array<{
     name: string;
     category: string;
-    proficiencyLevel: string;
+    // Removed proficiencyLevel
   }>;
 };
 
 const STEPS = [
+  { id: 0, title: "Resume Upload", description: "Quick start with your resume (optional)" },
   { id: 1, title: "Personal Info", description: "Tell us about yourself" },
   { id: 2, title: "Experience", description: "Your work history" },
   { id: 3, title: "Education", description: "Your academic background" },
@@ -80,8 +90,9 @@ const STEPS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [resumeDataLoaded, setResumeDataLoaded] = useState(false);
 
   const [formData, setFormData] = useState<OnboardingData>({
     personalInfo: {
@@ -104,15 +115,151 @@ export default function OnboardingPage() {
   });
 
   const handleNext = () => {
-    if (currentStep < STEPS.length) {
+    if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleSkipResumeUpload = () => {
+    setCurrentStep(1); // Skip to Personal Info
+  };
+
+  const handleResumeDataLoaded = (parsedData: any) => {
+    // Helper function to convert text to title case
+    const toTitleCase = (text: string) => {
+      return text
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+
+    // Helper function to extract and normalize name with suffix
+    const parseFullName = (fullName: string) => {
+      const suffixes = ['Jr.', 'Jr', 'Sr.', 'Sr', 'II', 'III', 'IV', 'V'];
+      let suffix = "";
+      let nameWithoutSuffix = fullName.trim();
+
+      // Check if the last part is a suffix
+      const parts = nameWithoutSuffix.split(/\s+/);
+      const lastPart = parts[parts.length - 1];
+
+      // Check for suffix (case-insensitive)
+      const foundSuffix = suffixes.find(s => s.toLowerCase() === lastPart.toLowerCase());
+      if (foundSuffix) {
+        suffix = foundSuffix;
+        parts.pop(); // Remove suffix from parts
+        nameWithoutSuffix = parts.join(' ');
+      }
+
+      // Normalize to title case
+      const normalizedName = toTitleCase(nameWithoutSuffix);
+      const normalizedParts = normalizedName.split(' ');
+
+      const firstName = normalizedParts[0] || "";
+      const lastName = normalizedParts.length > 1 ? normalizedParts[normalizedParts.length - 1] : "";
+      const middleName = normalizedParts.length > 2 ? normalizedParts.slice(1, -1).join(" ") : "";
+
+      return { firstName, middleName, lastName, suffix };
+    };
+
+    const fullName = parsedData.personal_info?.name || "";
+    const { firstName, middleName, lastName, suffix } = parseFullName(fullName);
+
+    setFormData({
+      personalInfo: {
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        email: parsedData.personal_info?.email || "",
+        phone: parsedData.personal_info?.phone || "",
+        location: parsedData.personal_info?.location || "",
+        bio: parsedData.personal_info?.professional_summary || "",
+        linkedin: parsedData.personal_info?.linkedin || "",
+        github: parsedData.personal_info?.github || "",
+        portfolio: parsedData.personal_info?.portfolio || "",
+      },
+      experience: parsedData.experience?.map((exp: any) => {
+        // Merge responsibilities and achievements
+        const responsibilities = exp.responsibilities || [];
+        const achievements = exp.achievements || [];
+        const mergedResponsibilities = [...responsibilities, ...achievements].map(item => {
+          const trimmed = item.trim();
+          // Add bullet if not already present (smart detection)
+          return trimmed.startsWith('•') ? trimmed : `• ${trimmed}`;
+        });
+
+        return {
+          id: crypto.randomUUID(),
+          company: exp.company || "",
+          role: exp.role || "",
+          startDate: exp.start_date || "",
+          endDate: exp.end_date || "",
+          isCurrent: !exp.end_date,
+          responsibilities: mergedResponsibilities,
+          achievements: [],
+          location: exp.location || "",
+          skills: exp.technologies || [],
+        };
+      }) || [],
+      education: parsedData.education?.map((edu: any) => ({
+        id: crypto.randomUUID(),
+        institution: edu.institution || "",
+        degree: edu.degree || "",
+        fieldOfStudy: edu.field_of_study || "",
+        startDate: edu.start_date || "",
+        endDate: edu.end_date || "",
+        isCurrent: !edu.end_date,
+        gpa: edu.gpa || "",
+        relevantCoursework: edu.relevant_coursework || [],
+        achievements: edu.achievements || [],
+        activities: edu.activities || [],
+      })) || [],
+      projects: parsedData.projects?.map((proj: any) => ({
+        id: crypto.randomUUID(),
+        name: proj.name || "",
+        description: proj.description || "",
+        projectUrl: proj.project_url || "",
+        githubUrl: "",
+        startDate: "",
+        endDate: "",
+        isCurrent: false,
+        skills: proj.technologies || [],
+        keyFeatures: proj.key_features || [],
+        achievements: proj.achievements || [],
+        roleResponsibilities: proj.role_responsibilities || [],
+      })) || [],
+      skills: parsedData.skills?.map((skill: any) => {
+        // Map any invalid categories to valid ones
+        let category = skill.category || "technical";
+        const validCategories = ["technical", "soft", "language", "tool"];
+
+        // Map common invalid categories
+        if (category === "soft_skill") category = "soft";
+        if (category === "framework" || category === "AI/ML" || category === "library") category = "technical";
+
+        // Default to technical if still invalid
+        if (!validCategories.includes(category)) {
+          category = "technical";
+        }
+
+        return {
+          name: skill.name || "",
+          category,
+        };
+      }) || [],
+    });
+
+    setResumeDataLoaded(true);
+    toast.success("Resume data loaded! Review and edit as needed.");
+    setCurrentStep(1); // Move to Personal Info step
   };
 
   const handleComplete = async () => {
@@ -223,22 +370,37 @@ export default function OnboardingPage() {
           <div className="text-center">
             <h1 className="text-3xl font-bold">Welcome to GetMeHired</h1>
             <p className="text-muted-foreground mt-2">
-              Let's build your professional profile
+              {currentStep === 0
+                ? "Upload your resume for a quick start, or fill manually"
+                : resumeDataLoaded
+                ? "Review and edit your information"
+                : "Let's build your professional profile"}
             </p>
           </div>
         </div>
 
         {/* Stepper */}
-        <OnboardingStepper steps={STEPS} currentStep={currentStep} />
+        <OnboardingStepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepClick={(stepId) => setCurrentStep(stepId)}
+        />
 
         {/* Form Card */}
         <Card className="mt-8">
           <CardContent className="p-8">
+            {currentStep === 0 && (
+              <ResumeUploadStep
+                onResumeDataLoaded={handleResumeDataLoaded}
+                onSkip={handleSkipResumeUpload}
+              />
+            )}
             {currentStep === 1 && (
               <PersonalInfoStep
                 data={formData.personalInfo}
                 onUpdate={updatePersonalInfo}
                 onNext={handleNext}
+                onBack={handleBack}
               />
             )}
             {currentStep === 2 && (

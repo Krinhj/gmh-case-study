@@ -25,6 +25,7 @@ interface ParsedResume {
     linkedin?: string;
     github?: string;
     portfolio?: string;
+    professional_summary?: string;
   };
   experience: Array<{
     company: string;
@@ -60,8 +61,7 @@ interface ParsedResume {
   }>;
   skills: Array<{
     name: string;
-    category: 'technical' | 'soft_skill' | 'language' | 'tool';
-    proficiency_level?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    category: 'technical' | 'soft' | 'language' | 'tool';
   }>;
 }
 
@@ -129,8 +129,11 @@ serve(async (req) => {
     // Validate parsed data
     const validatedData = validateParsedData(parsedData, pdfText);
 
+    // Normalize dates to YYYY-MM format
+    const normalizedData = normalizeDates(validatedData);
+
     return new Response(
-      JSON.stringify({ success: true, data: validatedData }),
+      JSON.stringify({ success: true, data: normalizedData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
@@ -158,17 +161,24 @@ CRITICAL ANTI-HALLUCINATION RULES:
 9. For achievements/responsibilities, extract ONLY what is explicitly bullet-pointed or stated
 10. NEVER add skills, technologies, or tools that are not mentioned in the resume
 
+SPECIAL PARSING INSTRUCTIONS:
+- For names: Extract EXACTLY as written in the resume, including ALL parts (first, middle, last, suffix) - DO NOT normalize or modify
+- For bullet points: Include ALL bullet points, including the first one in each list
+- For professional summaries: Extract the professional summary/objective section if present
+- For dates: Extract dates exactly as written, including formats like "February 2025 - May 2025" or "2021-2025"
+
 Return ONLY valid JSON with this exact structure. Use empty arrays [] for missing sections:
 
 {
   "personal_info": {
-    "name": "EXACT name from resume or empty string",
+    "name": "EXACT full name from resume as written, including suffix if present",
     "email": "EXACT email or empty string",
     "phone": "EXACT phone or empty string",
     "location": "EXACT location or empty string",
     "linkedin": "EXACT URL or null",
     "github": "EXACT URL or null",
-    "portfolio": "EXACT URL or null"
+    "portfolio": "EXACT URL or null",
+    "professional_summary": "Professional summary/objective section if present, otherwise null"
   },
   "experience": [
     {
@@ -211,8 +221,7 @@ Return ONLY valid JSON with this exact structure. Use empty arrays [] for missin
   "skills": [
     {
       "name": "EXACT skill name as written",
-      "category": "technical|soft_skill|language|tool (best fit based on context)",
-      "proficiency_level": null (do not guess proficiency unless explicitly stated)
+      "category": "technical|soft|language|tool (best fit based on context - use 'technical' for programming languages, frameworks, and libraries; use 'soft' for soft skills like communication; use 'language' for human languages; use 'tool' for software tools and platforms)"
     }
   ]
 }
@@ -299,5 +308,97 @@ function validateParsedData(parsed: ParsedResume, originalText: string): ParsedR
   });
 
   console.log('Validation complete - hallucinated data removed');
+  return parsed;
+}
+
+function normalizeDates(parsed: ParsedResume): ParsedResume {
+  // Helper function to convert various date formats to YYYY-MM
+  const normalizeDate = (dateStr: string | null): string | null => {
+    if (!dateStr || dateStr.toLowerCase() === 'present' || dateStr.toLowerCase() === 'current') {
+      return null;
+    }
+
+    try {
+      // Handle "YYYY-YYYY" format (e.g., "2021-2025") - take the first year
+      const yearRangeMatch = dateStr.match(/^(\d{4})-(\d{4})$/);
+      if (yearRangeMatch) {
+        // For education start/end, we'll just use the year and assume January for start, December for end
+        // But we need to know if this is start or end date - we'll handle this in the mapping below
+        return dateStr; // Keep original format for now, will handle in mapping
+      }
+
+      // Handle "YYYY" format (e.g., "2021")
+      const yearOnlyMatch = dateStr.match(/^\d{4}$/);
+      if (yearOnlyMatch) {
+        return `${dateStr}-01`; // Default to January
+      }
+
+      // Handle "Month YYYY" or "Month YYYY - Month YYYY" format
+      const monthYearMatch = dateStr.match(/([A-Za-z]+)\s+(\d{4})/);
+      if (monthYearMatch) {
+        const monthName = monthYearMatch[1];
+        const year = monthYearMatch[2];
+        const monthMap: Record<string, string> = {
+          'january': '01', 'jan': '01',
+          'february': '02', 'feb': '02',
+          'march': '03', 'mar': '03',
+          'april': '04', 'apr': '04',
+          'may': '05',
+          'june': '06', 'jun': '06',
+          'july': '07', 'jul': '07',
+          'august': '08', 'aug': '08',
+          'september': '09', 'sep': '09', 'sept': '09',
+          'october': '10', 'oct': '10',
+          'november': '11', 'nov': '11',
+          'december': '12', 'dec': '12'
+        };
+        const month = monthMap[monthName.toLowerCase()];
+        if (month) {
+          return `${year}-${month}`;
+        }
+      }
+
+      // If we can't parse it, return original
+      return dateStr;
+    } catch (e) {
+      console.warn(`Failed to normalize date: ${dateStr}`, e);
+      return dateStr;
+    }
+  };
+
+  // Normalize experience dates
+  parsed.experience = parsed.experience.map(exp => {
+    // Handle "Month YYYY - Month YYYY" format by splitting
+    if (exp.start_date && exp.start_date.includes(' - ')) {
+      const parts = exp.start_date.split(' - ');
+      exp.start_date = normalizeDate(parts[0].trim()) || exp.start_date;
+      exp.end_date = normalizeDate(parts[1].trim()) || exp.end_date;
+    } else {
+      exp.start_date = normalizeDate(exp.start_date) || exp.start_date;
+      exp.end_date = normalizeDate(exp.end_date);
+    }
+    return exp;
+  });
+
+  // Normalize education dates
+  parsed.education = parsed.education.map(edu => {
+    // Handle "YYYY-YYYY" format specifically for education
+    if (edu.start_date && edu.start_date.match(/^(\d{4})-(\d{4})$/)) {
+      const years = edu.start_date.split('-');
+      edu.start_date = `${years[0]}-01`; // Start year, January
+      edu.end_date = `${years[1]}-12`; // End year, December
+    } else if (edu.start_date && edu.start_date.includes(' - ')) {
+      // Handle "Month YYYY - Month YYYY" format
+      const parts = edu.start_date.split(' - ');
+      edu.start_date = normalizeDate(parts[0].trim()) || edu.start_date;
+      edu.end_date = normalizeDate(parts[1].trim()) || edu.end_date;
+    } else {
+      edu.start_date = normalizeDate(edu.start_date) || edu.start_date;
+      edu.end_date = normalizeDate(edu.end_date);
+    }
+    return edu;
+  });
+
+  console.log('Date normalization complete');
   return parsed;
 }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Mail, Phone, MapPin, FileText, Linkedin, Github, Globe } from "lucide-react";
+import { ArrowRight, ArrowLeft, Mail, Phone, MapPin, FileText, Linkedin, Github, Globe } from "lucide-react";
 
 type PersonalInfoStepProps = {
   data: {
@@ -22,9 +22,10 @@ type PersonalInfoStepProps = {
   };
   onUpdate: (data: Partial<PersonalInfoStepProps["data"]>) => void;
   onNext: () => void;
+  onBack?: () => void;
 };
 
-export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepProps) {
+export function PersonalInfoStep({ data, onUpdate, onNext, onBack }: PersonalInfoStepProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onNext();
@@ -59,7 +60,7 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             <Input
               id="middleName"
               type="text"
-              placeholder="Michael"
+              placeholder="A."
               value={data.middleName}
               onChange={(e) => onUpdate({ middleName: e.target.value })}
             />
@@ -217,8 +218,14 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
       </div>
 
       {/* Navigation */}
-      <div className="flex justify-end pt-4">
-        <Button type="submit" className="gap-2">
+      <div className="flex justify-between pt-4">
+        {onBack && (
+          <Button type="button" variant="outline" onClick={onBack} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        )}
+        <Button type="submit" className="gap-2 ml-auto">
           Continue to Experience
           <ArrowRight className="h-4 w-4" />
         </Button>

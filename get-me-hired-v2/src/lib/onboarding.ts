@@ -83,7 +83,17 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
       throw profileError;
     }
 
-    // 2. Save work experience
+    // 2. Save work experience (delete existing first to prevent duplicates)
+    // Delete existing work experience for this user
+    const { error: deleteExpError } = await supabase
+      .from('work_experience')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteExpError) {
+      console.warn('Could not delete existing work experience (non-critical):', deleteExpError);
+    }
+
     if (data.experience.length > 0) {
       const experienceData = data.experience.map((exp) => ({
         user_id: userId,
@@ -92,7 +102,9 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
         start_date: exp.startDate ? `${exp.startDate}-01` : null,
         end_date: exp.isCurrent ? null : (exp.endDate ? `${exp.endDate}-01` : null),
         is_current: exp.isCurrent,
-        description: exp.description || null,
+        responsibilities: exp.responsibilities || [],
+        achievements: exp.achievements || [],
+        skills: exp.skills || [],
         location: exp.location || null,
       }));
 
@@ -114,7 +126,16 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
       }
     }
 
-    // 3. Save education
+    // 3. Save education (delete existing first to prevent duplicates)
+    const { error: deleteEduError } = await supabase
+      .from('education')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteEduError) {
+      console.warn('Could not delete existing education (non-critical):', deleteEduError);
+    }
+
     if (data.education.length > 0) {
       const educationData = data.education.map((edu) => ({
         user_id: userId,
@@ -124,7 +145,9 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
         start_date: edu.startDate ? `${edu.startDate}-01` : null,
         end_date: edu.isCurrent ? null : (edu.endDate ? `${edu.endDate}-01` : null),
         gpa: edu.gpa || null,
-        description: edu.description || null,
+        relevant_coursework: edu.relevantCoursework || [],
+        achievements: edu.achievements || [],
+        activities: edu.activities || [],
       }));
 
       const { error: eduError } = await supabase
@@ -132,20 +155,42 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
         .insert(educationData);
 
       if (eduError) {
-        console.error('Education error:', eduError);
+        console.error('Education error (raw):', eduError);
+        console.error('Education error (stringified):', JSON.stringify(eduError, null, 2));
+        console.error('Education error details:', {
+          message: eduError.message,
+          code: eduError.code,
+          details: eduError.details,
+          hint: eduError.hint,
+        });
+        console.error('Education data being inserted:', JSON.stringify(educationData, null, 2));
         throw eduError;
       }
     }
 
-    // 4. Save projects
+    // 4. Save projects (delete existing first to prevent duplicates)
+    const { error: deleteProjError } = await supabase
+      .from('projects')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteProjError) {
+      console.warn('Could not delete existing projects (non-critical):', deleteProjError);
+    }
+
     if (data.projects.length > 0) {
       const projectsData = data.projects.map((proj) => ({
         user_id: userId,
         name: proj.name,
         description: proj.description,
-        project_url: proj.url || null,
+        project_url: proj.projectUrl || null,
+        github_url: proj.githubUrl || null,
         start_date: proj.startDate ? `${proj.startDate}-01` : null,
         end_date: proj.isCurrent ? null : (proj.endDate ? `${proj.endDate}-01` : null),
+        skills: proj.skills || [],
+        key_features: proj.keyFeatures || [],
+        achievements: proj.achievements || [],
+        role_responsibilities: proj.roleResponsibilities || [],
       }));
 
       const { error: projError } = await supabase
@@ -153,18 +198,34 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
         .insert(projectsData);
 
       if (projError) {
-        console.error('Projects error:', projError);
+        console.error('Projects error (raw):', projError);
+        console.error('Projects error (stringified):', JSON.stringify(projError, null, 2));
+        console.error('Projects error details:', {
+          message: projError.message,
+          code: projError.code,
+          details: projError.details,
+          hint: projError.hint,
+        });
+        console.error('Projects data being inserted:', JSON.stringify(projectsData, null, 2));
         throw projError;
       }
     }
 
-    // 5. Save skills
+    // 5. Save skills (delete existing first to prevent duplicates)
+    const { error: deleteSkillsError } = await supabase
+      .from('skills')
+      .delete()
+      .eq('user_id', userId);
+
+    if (deleteSkillsError) {
+      console.warn('Could not delete existing skills (non-critical):', deleteSkillsError);
+    }
+
     if (data.skills.length > 0) {
       const skillsData = data.skills.map((skill) => ({
         user_id: userId,
         name: skill.name,
         category: skill.category,
-        proficiency_level: skill.proficiencyLevel || null,
       }));
 
       const { error: skillsError } = await supabase
@@ -172,14 +233,32 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
         .insert(skillsData);
 
       if (skillsError) {
-        console.error('Skills error:', skillsError);
+        console.error('Skills error (raw):', skillsError);
+        console.error('Skills error (stringified):', JSON.stringify(skillsError, null, 2));
+        console.error('Skills error details:', {
+          message: skillsError.message,
+          code: skillsError.code,
+          details: skillsError.details,
+          hint: skillsError.hint,
+        });
+        console.error('Skills data being inserted:', JSON.stringify(skillsData, null, 2));
         throw skillsError;
       }
     }
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error saving onboarding data:', error);
+    console.error('Error saving onboarding data (raw):', error);
+    console.error('Error saving onboarding data (stringified):', JSON.stringify(error, null, 2));
+    if (error && typeof error === 'object') {
+      console.error('Error properties:', {
+        message: (error as any).message,
+        code: (error as any).code,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        stack: (error as any).stack,
+      });
+    }
     return { success: false, error };
   }
 }

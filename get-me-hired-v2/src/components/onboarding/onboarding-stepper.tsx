@@ -10,9 +10,10 @@ type Step = {
 type OnboardingStepperProps = {
   steps: Step[];
   currentStep: number;
+  onStepClick?: (stepId: number) => void;
 };
 
-export function OnboardingStepper({ steps, currentStep }: OnboardingStepperProps) {
+export function OnboardingStepper({ steps, currentStep, onStepClick }: OnboardingStepperProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
@@ -25,12 +26,16 @@ export function OnboardingStepper({ steps, currentStep }: OnboardingStepperProps
             <div key={step.id} className="flex items-center flex-1">
               {/* Step Circle */}
               <div className="flex flex-col items-center">
-                <div
+                <button
+                  onClick={() => onStepClick?.(step.id)}
+                  disabled={step.id === 0 || !onStepClick}
                   className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
+                    "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all",
                     isCompleted && "border-primary bg-primary text-primary-foreground",
                     isCurrent && "border-primary bg-background text-primary",
-                    isUpcoming && "border-muted-foreground/30 bg-background text-muted-foreground"
+                    isUpcoming && "border-muted-foreground/30 bg-background text-muted-foreground",
+                    onStepClick && step.id !== 0 && "cursor-pointer hover:scale-110",
+                    (!onStepClick || step.id === 0) && "cursor-default"
                   )}
                 >
                   {isCompleted ? (
@@ -38,7 +43,7 @@ export function OnboardingStepper({ steps, currentStep }: OnboardingStepperProps
                   ) : (
                     <span className="text-sm font-semibold">{step.id}</span>
                   )}
-                </div>
+                </button>
                 <div className="mt-2 text-center">
                   <p
                     className={cn(
