@@ -1478,18 +1478,19 @@ export async function POST(request: Request) {
 **Function Logic:**
 
 1. **Fetch user profile data from Supabase**
-   - Query all profile tables: `profiles`, `work_experience`, `education`, `projects`, `skills`
+   - Query all profile tables: `personal_info`, `work_experience`, `education`, `projects`, `skills`
    - Combine into structured profile object
-   - Include rich array data (technologies, achievements, responsibilities, etc.)
+   - Include rich array data (skills, achievements, responsibilities, key_features, etc.)
 
 2. **Fetch job application data**
    - Query `job_applications` table for job posting details
-   - Extract: company, role, job_description, required_skills, preferred_skills, responsibilities, qualifications
+   - Extract: company, role, location, work_mode, industry, job_description, job_requirements, job_responsibilities
+   - Validate minimum required data (job_description or job_requirements must be present)
 
 3. **Format data for OpenAI prompt**
-   - Convert profile arrays into readable format
-   - Structure job requirements clearly
-   - Prepare comprehensive context
+   - Convert profile arrays into readable format with bullet points
+   - Structure job requirements clearly with labeled sections
+   - Prepare comprehensive context including all available profile data
 
 4. **Call OpenAI API to analyze match**
    - **Model:** `gpt-4o`
@@ -1553,7 +1554,8 @@ export async function POST(request: Request) {
 5. **Validate response and update database**
    - Ensure match_score is 0-100
    - Validate JSON structure
-   - Update `job_applications` table with `match_score` and `match_insights`
+   - Update `job_applications` table with `match_score` only
+   - Return full insights in API response (not stored in database)
 
 **Output (JSON):**
 ```typescript
@@ -1574,31 +1576,70 @@ export async function POST(request: Request) {
 ```
 
 **Error Handling:**
-- Retry OpenAI calls up to 2 times with exponential backoff
-- If profile data incomplete, return warning in recommendations
-- Graceful degradation if optional fields missing
+- Returns 400 error if job description and requirements are both missing
+- Validates match_score is between 0-100 (clamps if necessary)
+- Logs errors for debugging
+- Returns user-friendly error messages
+- Gracefully handles missing optional profile fields
+
+**Implementation Details:**
+- **Manual Trigger:** Match analysis runs on-demand when user clicks "Re-calculate" button
+- **UI Integration:** Match score displayed as color-coded badge in application cards
+  - 🟢 Green (80-100%): Strong match
+  - 🟡 Yellow (50-79%): Medium match
+  - 🔴 Red (0-49%): Low match
+- **Match Insights Storage:** Smart hybrid caching approach
+  - Only `match_score` (integer) stored in database
+  - Full insights cached in `sessionStorage` with key pattern `match_insights_${applicationId}`
+  - Insights generated on-demand to prevent stale data
+  - sessionStorage cleared on logout/profile updates
+  - Staleness indicators show age of insights (green < 24h, yellow 1-7d, red > 7d)
+- **Re-analysis:** Users can trigger re-analysis from:
+  - Application list page (re-calculate button next to match score)
+  - Application detail page (View Insights modal with re-analyze button)
 
 **Next.js API Route Wrapper:**
 ```typescript
 // app/api/analyze-match/route.ts
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { job_application_id } = await request.json();
+
+  // Verify job application belongs to user
+  const { data: jobApp } = await supabase
+    .from("job_applications")
+    .select("id, user_id")
+    .eq("id", job_application_id)
+    .single();
+
+  if (jobApp.user_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   // Call Edge Function
   const { data, error } = await supabase.functions.invoke('analyze-job-match', {
     body: { user_id: user.id, job_application_id }
   });
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error || !data.success) {
+    return NextResponse.json({ error: error?.message || data.error }, { status: 500 });
+  }
 
-  return Response.json(data);
+  return NextResponse.json({ success: true, data: data.data });
 }
 ```
+
+**User Flow:**
+1. User adds/edits job application with job description
+2. On save → API automatically calls `/api/analyze-match`
+3. Edge Function analyzes match → Updates database
+4. UI displays match score badge immediately
+5. User can view detailed insights in Match Analysis tab
+6. User can click "Re-analyze" to update score after profile changes
 
 ---
 
@@ -2062,21 +2103,26 @@ const handleSave = async () => {
 
 ### Job Match Analysis
 
-1. User adds or edits job application
-2. **Option 1:** Automatically trigger analysis on save
-3. **Option 2:** Manual trigger via "Analyze Match" button on `/applications/[id]`
-4. Process:
-   - Next.js API route calls `analyze-job-match` Edge Function
+1. User adds or edits job application (match score NOT calculated automatically)
+2. User manually triggers analysis via "Re-calculate" button:
+   - **Location 1:** Application list page (`/applications`) - button next to match score percentage
+   - **Location 2:** Application detail page (`/applications/[id]`) - "View Insights" modal
+3. Process:
+   - Frontend calls `analyze-job-match` Edge Function directly via Supabase client
    - Edge Function fetches profile + job data from Supabase
-   - OpenAI analyzes match based on skills, experience, qualifications
-   - Returns match score (0-100) + insights
-   - Updates `job_applications` table with `match_score` and `match_insights`
-5. Display insights to user:
-   - Match percentage with color-coded indicator
-   - Matching skills (green badges)
-   - Missing skills (red badges)
-   - Recommendations for improving application
-   - "Proceed to Generate Resume" button
+   - OpenAI GPT-4o analyzes match based on skills, experience, qualifications
+   - Returns match score (0-100) + full insights object
+   - Updates `job_applications` table with `match_score` only (NOT insights)
+   - Frontend caches full insights in `sessionStorage` for smart hybrid approach
+4. Display insights to user:
+   - Match percentage with color-coded badge (green 80-100%, yellow 50-79%, red 0-49%)
+   - Progress bar with color-coded fill
+   - "View Insights" button opens modal with:
+     - Overall score with staleness indicator
+     - 2-column grid: Matching skills (left) + Missing skills (right)
+     - Strong points (left) + Weak points (right)
+     - Recommendations in highlighted container at bottom
+   - Re-analyze button to regenerate fresh insights
 
 ---
 

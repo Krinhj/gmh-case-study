@@ -236,33 +236,14 @@ export function ApplicationDialog({
             </div>
           </div>
 
-          {/* Match Score */}
-          <div className="space-y-2">
-            <Label htmlFor="match_score">
-              Match Score (0-100)
-              <span className="text-xs text-muted-foreground ml-2">
-                Optional - How well do you match this role?
-              </span>
-            </Label>
-            <Input
-              id="match_score"
-              type="number"
-              min="0"
-              max="100"
-              placeholder="e.g., 85"
-              value={formData.match_score ?? ""}
-              onChange={(e) =>
-                updateField(
-                  "match_score",
-                  e.target.value ? parseInt(e.target.value) : null
-                )
-              }
-            />
-          </div>
-
           {/* Job Description */}
           <div className="space-y-2">
-            <Label htmlFor="job_description">Job Description</Label>
+            <Label htmlFor="job_description">
+              Job Description
+              <span className="text-xs text-muted-foreground ml-2">
+                💡 Paste full job posting for AI match analysis
+              </span>
+            </Label>
             <Textarea
               id="job_description"
               placeholder="Paste the job description here..."
