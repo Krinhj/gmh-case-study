@@ -23,7 +23,9 @@ import {
   ArrowLeft,
   FileText,
   StickyNote,
+  Info,
 } from "lucide-react";
+import { MatchInsightsDialog } from "@/components/applications/match-insights-dialog";
 
 type JobApplication = {
   id: string;
@@ -51,6 +53,18 @@ const statusConfig = {
   rejected: { label: "Rejected", color: "bg-red-500/10 text-red-500 border-red-500/20" },
 };
 
+const getMatchScoreColor = (score: number) => {
+  if (score >= 80) return "bg-green-500";
+  if (score >= 50) return "bg-yellow-500";
+  return "bg-red-500";
+};
+
+const getMatchScoreBadgeColor = (score: number) => {
+  if (score >= 80) return "bg-green-500/10 text-green-600 border-green-500/20";
+  if (score >= 50) return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+  return "bg-red-500/10 text-red-600 border-red-500/20";
+};
+
 export default function ApplicationViewPage() {
   const router = useRouter();
   const params = useParams();
@@ -62,6 +76,7 @@ export default function ApplicationViewPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [insightsDialogOpen, setInsightsDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadApplication = async () => {
@@ -303,13 +318,24 @@ export default function ApplicationViewPage() {
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-base font-semibold">
+                            <Badge
+                              variant="outline"
+                              className={getMatchScoreBadgeColor(application.match_score)}
+                            >
                               {application.match_score}%
-                            </span>
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setInsightsDialogOpen(true)}
+                            >
+                              <Info className="mr-2 h-3 w-3" />
+                              View Insights
+                            </Button>
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary transition-all"
+                              className={`h-full transition-all ${getMatchScoreColor(application.match_score)}`}
                               style={{ width: `${application.match_score}%` }}
                             />
                           </div>
@@ -492,6 +518,17 @@ export default function ApplicationViewPage() {
           cancelText="Cancel"
           variant="destructive"
         />
+
+        {/* Match Insights Dialog */}
+        {userId && application && (
+          <MatchInsightsDialog
+            open={insightsDialogOpen}
+            onOpenChange={setInsightsDialogOpen}
+            applicationId={application.id}
+            userId={userId}
+            currentMatchScore={application.match_score || 0}
+          />
+        )}
       </main>
     </div>
   );

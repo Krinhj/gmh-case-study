@@ -51,6 +51,18 @@ const statusConfig = {
   rejected: { label: "Rejected", color: "bg-red-500/10 text-red-500 border-red-500/20" },
 };
 
+const getMatchScoreColor = (score: number) => {
+  if (score >= 80) return "bg-green-500";
+  if (score >= 50) return "bg-yellow-500";
+  return "bg-red-500";
+};
+
+const getMatchScoreBadgeColor = (score: number) => {
+  if (score >= 80) return "bg-green-500/10 text-green-600 border-green-500/20";
+  if (score >= 50) return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+  return "bg-red-500/10 text-red-600 border-red-500/20";
+};
+
 export default function ApplicationsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -256,6 +268,12 @@ export default function ApplicationsPage() {
         localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
       }
 
+      // Cache insights in sessionStorage for smart hybrid approach
+      sessionStorage.setItem(
+        `match_insights_${applicationId}`,
+        JSON.stringify(data.data)
+      );
+
       toast.success(`Match score: ${data.data.match_score}%`, { id: `analyzing-${applicationId}` });
     } catch (error: any) {
       console.error("Error analyzing match:", error);
@@ -413,7 +431,12 @@ export default function ApplicationsPage() {
                           <div className="flex items-center justify-between text-sm mb-1">
                             <span className="text-muted-foreground">Match Score</span>
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold">{application.match_score}%</span>
+                              <Badge
+                                variant="outline"
+                                className={getMatchScoreBadgeColor(application.match_score)}
+                              >
+                                {application.match_score}%
+                              </Badge>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -432,7 +455,7 @@ export default function ApplicationsPage() {
                           </div>
                           <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary transition-all"
+                              className={`h-full transition-all ${getMatchScoreColor(application.match_score)}`}
                               style={{ width: `${application.match_score}%` }}
                             />
                           </div>

@@ -1554,7 +1554,8 @@ export async function POST(request: Request) {
 5. **Validate response and update database**
    - Ensure match_score is 0-100
    - Validate JSON structure
-   - Update `job_applications` table with `match_score` and `match_insights`
+   - Update `job_applications` table with `match_score` only
+   - Return full insights in API response (not stored in database)
 
 **Output (JSON):**
 ```typescript
@@ -1582,13 +1583,20 @@ export async function POST(request: Request) {
 - Gracefully handles missing optional profile fields
 
 **Implementation Details:**
-- **Automatic Trigger:** Match analysis runs automatically when user saves a job application
+- **Manual Trigger:** Match analysis runs on-demand when user clicks "Re-calculate" button
 - **UI Integration:** Match score displayed as color-coded badge in application cards
   - 🟢 Green (80-100%): Strong match
   - 🟡 Yellow (50-79%): Medium match
   - 🔴 Red (0-49%): Low match
-- **Match Insights Storage:** Full analysis stored in `match_insights` JSONB field
-- **Re-analysis:** Users can trigger re-analysis from application detail page
+- **Match Insights Storage:** Smart hybrid caching approach
+  - Only `match_score` (integer) stored in database
+  - Full insights cached in `sessionStorage` with key pattern `match_insights_${applicationId}`
+  - Insights generated on-demand to prevent stale data
+  - sessionStorage cleared on logout/profile updates
+  - Staleness indicators show age of insights (green < 24h, yellow 1-7d, red > 7d)
+- **Re-analysis:** Users can trigger re-analysis from:
+  - Application list page (re-calculate button next to match score)
+  - Application detail page (View Insights modal with re-analyze button)
 
 **Next.js API Route Wrapper:**
 ```typescript
@@ -2095,21 +2103,26 @@ const handleSave = async () => {
 
 ### Job Match Analysis
 
-1. User adds or edits job application
-2. **Option 1:** Automatically trigger analysis on save
-3. **Option 2:** Manual trigger via "Analyze Match" button on `/applications/[id]`
-4. Process:
-   - Next.js API route calls `analyze-job-match` Edge Function
+1. User adds or edits job application (match score NOT calculated automatically)
+2. User manually triggers analysis via "Re-calculate" button:
+   - **Location 1:** Application list page (`/applications`) - button next to match score percentage
+   - **Location 2:** Application detail page (`/applications/[id]`) - "View Insights" modal
+3. Process:
+   - Frontend calls `analyze-job-match` Edge Function directly via Supabase client
    - Edge Function fetches profile + job data from Supabase
-   - OpenAI analyzes match based on skills, experience, qualifications
-   - Returns match score (0-100) + insights
-   - Updates `job_applications` table with `match_score` and `match_insights`
-5. Display insights to user:
-   - Match percentage with color-coded indicator
-   - Matching skills (green badges)
-   - Missing skills (red badges)
-   - Recommendations for improving application
-   - "Proceed to Generate Resume" button
+   - OpenAI GPT-4o analyzes match based on skills, experience, qualifications
+   - Returns match score (0-100) + full insights object
+   - Updates `job_applications` table with `match_score` only (NOT insights)
+   - Frontend caches full insights in `sessionStorage` for smart hybrid approach
+4. Display insights to user:
+   - Match percentage with color-coded badge (green 80-100%, yellow 50-79%, red 0-49%)
+   - Progress bar with color-coded fill
+   - "View Insights" button opens modal with:
+     - Overall score with staleness indicator
+     - 2-column grid: Matching skills (left) + Missing skills (right)
+     - Strong points (left) + Weak points (right)
+     - Recommendations in highlighted container at bottom
+   - Re-analyze button to regenerate fresh insights
 
 ---
 
