@@ -1,15 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, FileText, Download, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Loader2,
+  FileText,
+  Download,
+  Save,
+  PenLine,
+  Building2,
+  MapPin,
+  Briefcase,
+  Gauge,
+  AlertTriangle,
+  Check,
+  Search,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -17,8 +31,11 @@ interface JobApplication {
   id: string;
   company: string;
   role: string;
-  job_description: string;
+  job_description: string | null;
   created_at: string;
+  location: string | null;
+  work_mode: "remote" | "onsite" | "hybrid" | null;
+  match_score: number | null;
 }
 
 interface PersonalInfo {
@@ -36,6 +53,47 @@ const NAME_SUFFIXES = new Set([
   "v",
 ]);
 
+const DOCUMENT_TYPE_OPTIONS = [
+  {
+    value: "resume" as const,
+    title: "Resume",
+    description: "ATS-friendly resume tailored to the role you selected.",
+    icon: FileText,
+  },
+  {
+    value: "cover_letter" as const,
+    title: "Cover Letter",
+    description: "Personalized letter that speaks directly to the job description.",
+    icon: PenLine,
+  },
+];
+
+const getWorkModeLabel = (mode: "remote" | "onsite" | "hybrid" | null) => {
+  switch (mode) {
+    case "remote":
+      return "Remote";
+    case "onsite":
+      return "On-site";
+    case "hybrid":
+      return "Hybrid";
+    default:
+      return null;
+  }
+};
+
+const getMatchScoreBadgeClass = (score: number) => {
+  if (score >= 80) return "border-green-500/30 bg-green-500/10 text-green-500";
+  if (score >= 50) return "border-yellow-500/30 bg-yellow-500/10 text-yellow-600";
+  return "border-red-500/30 bg-red-500/10 text-red-500";
+};
+
+const formatMatchScore = (score: number | null) => {
+  if (score === null || Number.isNaN(score)) {
+    return null;
+  }
+  return `${Math.round(score)}%`;
+};
+
 export default function GeneratePage() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<string>("");
@@ -46,14 +104,12 @@ export default function GeneratePage() {
   const [generatedDocumentType, setGeneratedDocumentType] = useState<"resume" | "cover_letter" | null>(null);
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
   const [savingFormat, setSavingFormat] = useState<ExportFormat | null>(null);
+  const [isPreviewStale, setIsPreviewStale] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -62,7 +118,7 @@ export default function GeneratePage() {
       const [applicationsResponse, personalInfoResponse] = await Promise.all([
         supabase
           .from("job_applications")
-          .select("id, company, role, job_description, created_at")
+          .select("id, company, role, job_description, created_at, location, work_mode, match_score")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
@@ -73,7 +129,34 @@ export default function GeneratePage() {
       ]);
 
       if (applicationsResponse.error) throw applicationsResponse.error;
-      setApplications(applicationsResponse.data || []);
+      const fetchedApplications = applicationsResponse.data || [];
+      setApplications(fetchedApplications);
+
+      if (fetchedApplications.length > 0) {
+        const sortedByCreatedAt = [...fetchedApplications].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setSelectedApplication((currentSelected) => {
+          if (currentSelected && sortedByCreatedAt.some((app) => app.id === currentSelected)) {
+            return currentSelected;
+          }
+
+          setGeneratedHtml("");
+          setGeneratedDocumentType(null);
+          setIsPreviewStale(false);
+          return sortedByCreatedAt[0].id;
+        });
+      } else {
+        setSelectedApplication((currentSelected) => {
+          if (currentSelected !== "") {
+            setGeneratedHtml("");
+            setGeneratedDocumentType(null);
+            setIsPreviewStale(false);
+          }
+          return "";
+        });
+      }
 
       if (!personalInfoResponse.error && personalInfoResponse.data) {
         setPersonalInfo(personalInfoResponse.data as PersonalInfo);
@@ -84,6 +167,60 @@ export default function GeneratePage() {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    void fetchApplications();
+  }, [fetchApplications]);
+
+  const sortedApplications = useMemo(() => {
+    return [...applications].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [applications]);
+
+  const filteredApplications = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    if (!term) {
+      return sortedApplications;
+    }
+
+    return sortedApplications.filter((app) => {
+      const haystack = [
+        app.role,
+        app.company,
+        app.location ?? "",
+        getWorkModeLabel(app.work_mode) ?? "",
+        formatMatchScore(app.match_score) ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
+  }, [sortedApplications, searchTerm]);
+
+  const handleDocumentTypeChange = (value: "resume" | "cover_letter") => {
+    setDocumentType(value);
+
+    if (!generatedDocumentType) {
+      setIsPreviewStale(false);
+      return;
+    }
+
+    setIsPreviewStale(generatedDocumentType !== value);
+  };
+
+  const handleSelectApplication = (applicationId: string) => {
+    if (applicationId === selectedApplication) {
+      return;
+    }
+
+    setSelectedApplication(applicationId);
+    setGeneratedHtml("");
+    setGeneratedDocumentType(null);
+    setIsPreviewStale(false);
   };
 
   const handleGenerate = async () => {
@@ -95,6 +232,7 @@ export default function GeneratePage() {
     setIsGenerating(true);
     setGeneratedHtml("");
     setGeneratedDocumentType(null);
+    setIsPreviewStale(false);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,6 +258,7 @@ export default function GeneratePage() {
 
       setGeneratedHtml(data.data.html);
       setGeneratedDocumentType(requestedDocumentType);
+      setIsPreviewStale(false);
 
       toast.success(`${requestedDocumentType === "resume" ? "Resume" : "Cover Letter"} generated successfully`);
 
@@ -253,7 +392,11 @@ export default function GeneratePage() {
       return;
     }
     if (!generatedDocumentType) {
-      toast.error("Please regenerate the document before downloading");
+      toast.error("Please generate a document before downloading");
+      return;
+    }
+    if (isPreviewStale) {
+      toast.error("Preview is outdated. Regenerate to download the latest version.");
       return;
     }
     try {
@@ -280,7 +423,11 @@ export default function GeneratePage() {
       return;
     }
     if (!generatedDocumentType) {
-      toast.error("Please regenerate the document before saving");
+      toast.error("Please generate a document before saving");
+      return;
+    }
+    if (isPreviewStale) {
+      toast.error("Preview is outdated. Regenerate to save the latest version.");
       return;
     }
     setSavingFormat(format);
@@ -336,6 +483,8 @@ export default function GeneratePage() {
     }
   };
 
+  const totalApplications = applications.length;
+  const visibleApplications = filteredApplications.length;
   const selectedApp = applications.find((app) => app.id === selectedApplication);
   const isSaving = savingFormat !== null;
 
@@ -361,61 +510,215 @@ export default function GeneratePage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Application Selector */}
-            <div className="space-y-2">
-              <Label htmlFor="application">Job Application</Label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="application-search">Job Application</Label>
+                <span className="text-xs text-muted-foreground">
+                  Showing {visibleApplications} of {totalApplications} applications
+                </span>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="application-search"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search by role, company, location, or work mode..."
+                  className="pl-9"
+                />
+              </div>
               {isLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Loading applications...</span>
                 </div>
-              ) : applications.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No job applications found. Create one first to generate documents.
-                </p>
+              ) : totalApplications === 0 ? (
+                <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  <p>You haven&apos;t added any job applications yet.</p>
+                  <p className="mt-1">Create one to start generating tailored documents.</p>
+                </div>
+              ) : visibleApplications === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                  <p>
+                    No job applications match{" "}
+                    <span className="font-medium">{searchTerm}</span>.
+                  </p>
+                  <Button variant="ghost" size="sm" className="mt-3" onClick={() => setSearchTerm("")}>
+                    Clear search
+                  </Button>
+                </div>
               ) : (
-                <Select value={selectedApplication} onValueChange={setSelectedApplication}>
-                  <SelectTrigger id="application">
-                    <SelectValue placeholder="Select a job application" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {applications.map((app) => (
-                      <SelectItem key={app.id} value={app.id}>
-                        {app.role} at {app.company}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid max-h-64 gap-2 overflow-y-auto pr-1">
+                  {filteredApplications.map((app) => {
+                    const isActive = app.id === selectedApplication;
+                    const workModeLabel = getWorkModeLabel(app.work_mode);
+                    const matchLabel = formatMatchScore(app.match_score);
+
+                    return (
+                      <button
+                        key={app.id}
+                        type="button"
+                        onClick={() => handleSelectApplication(app.id)}
+                        className={cn(
+                          "flex w-full flex-col gap-2 rounded-xl border p-4 text-left transition",
+                          isActive
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-border hover:border-primary/60 hover:bg-muted/20"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold leading-tight">{app.role}</p>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Building2 className="h-3.5 w-3.5" />
+                                {app.company}
+                              </span>
+                              {app.location && (
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  {app.location}
+                                </span>
+                              )}
+                              {workModeLabel && (
+                                <span className="flex items-center gap-1">
+                                  <Briefcase className="h-3.5 w-3.5" />
+                                  {workModeLabel}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {isActive && <Check className="h-4 w-4 text-primary" />}
+                        </div>
+                        {matchLabel && app.match_score !== null && (
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                              getMatchScoreBadgeClass(app.match_score)
+                            )}
+                          >
+                            <Gauge className="h-3 w-3" />
+                            Match {matchLabel}
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
             {/* Selected Application Details */}
             {selectedApp && (
-              <div className="rounded-lg border p-4 bg-muted/50 space-y-2">
-                <h3 className="font-semibold">{selectedApp.role}</h3>
-                <p className="text-sm text-muted-foreground">{selectedApp.company}</p>
-                <p className="text-xs text-muted-foreground line-clamp-3">
-                  {selectedApp.job_description}
-                </p>
+              <div className="rounded-xl border bg-muted/40 p-4 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold leading-tight">{selectedApp.role}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="h-4 w-4" />
+                        {selectedApp.company}
+                      </span>
+                      {selectedApp.location && (
+                        <>
+                          <span className="text-muted-foreground/50">{"\u2022"}</span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {selectedApp.location}
+                          </span>
+                        </>
+                      )}
+                      {getWorkModeLabel(selectedApp.work_mode) && (
+                        <>
+                          <span className="text-muted-foreground/50">{"\u2022"}</span>
+                          <span className="flex items-center gap-1">
+                            <Briefcase className="h-4 w-4" />
+                            {getWorkModeLabel(selectedApp.work_mode)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {selectedApp.match_score !== null && (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold",
+                        getMatchScoreBadgeClass(selectedApp.match_score)
+                      )}
+                    >
+                      <Gauge className="h-3.5 w-3.5" />
+                      Match {formatMatchScore(selectedApp.match_score)}
+                    </Badge>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Document Type Selector */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Document Type</Label>
-              <RadioGroup value={documentType} onValueChange={(value) => setDocumentType(value as "resume" | "cover_letter")}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="resume" id="resume" />
-                  <Label htmlFor="resume" className="font-normal cursor-pointer">
-                    Resume
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="cover_letter" id="cover_letter" />
-                  <Label htmlFor="cover_letter" className="font-normal cursor-pointer">
-                    Cover Letter
-                  </Label>
-                </div>
-              </RadioGroup>
+              <div role="radiogroup" className="grid gap-3 md:grid-cols-2">
+                {DOCUMENT_TYPE_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const isActive = documentType === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => handleDocumentTypeChange(option.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === " " || event.key === "Enter") {
+                          event.preventDefault();
+                          handleDocumentTypeChange(option.value);
+                        }
+                      }}
+                      className={cn(
+                        "group flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                        isActive
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border hover:border-primary/60"
+                      )}
+                    >
+                      <div className="flex w-full items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={cn(
+                              "flex h-10 w-10 items-center justify-center rounded-full text-primary transition",
+                              isActive ? "bg-primary/10" : "bg-muted/50"
+                            )}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div className="space-y-1">
+                            <p className="text-base font-semibold">{option.title}</p>
+                            <p className="text-sm text-muted-foreground">{option.description}</p>
+                          </div>
+                        </div>
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "mt-1 grid h-4 w-4 place-items-center rounded-full border-2 transition",
+                            isActive ? "border-primary bg-primary" : "border-border"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-2 w-2 rounded-full transition",
+                              isActive ? "bg-primary-foreground" : "bg-transparent"
+                            )}
+                          />
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Generate Button */}
@@ -443,18 +746,19 @@ export default function GeneratePage() {
         {/* Preview Section */}
         {generatedHtml && generatedDocumentType && (
           <Card ref={previewRef}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="space-y-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <CardTitle>Document Preview</CardTitle>
                   <CardDescription>
                     Preview your generated {generatedDocumentType === "resume" ? "resume" : "cover letter"}
                   </CardDescription>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     variant="outline"
                     onClick={() => handleDownload("pdf")}
+                    disabled={isPreviewStale}
                     className="flex items-center"
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -463,6 +767,7 @@ export default function GeneratePage() {
                   <Button
                     variant="outline"
                     onClick={() => handleDownload("docx")}
+                    disabled={isPreviewStale}
                     className="flex items-center"
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -470,7 +775,7 @@ export default function GeneratePage() {
                   </Button>
                   <Button
                     onClick={() => handleSave("pdf")}
-                    disabled={isSaving}
+                    disabled={isSaving || isPreviewStale}
                     className="flex items-center"
                   >
                     {savingFormat === "pdf" ? (
@@ -487,7 +792,7 @@ export default function GeneratePage() {
                   </Button>
                   <Button
                     onClick={() => handleSave("docx")}
-                    disabled={isSaving}
+                    disabled={isSaving || isPreviewStale}
                     className="flex items-center"
                   >
                     {savingFormat === "docx" ? (
@@ -504,6 +809,14 @@ export default function GeneratePage() {
                   </Button>
                 </div>
               </div>
+              {isPreviewStale && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>
+                    You generated a {generatedDocumentType === "resume" ? "resume" : "cover letter"}. Regenerate to create a new {documentType === "resume" ? "resume" : "cover letter"} before downloading or saving.
+                  </span>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div
