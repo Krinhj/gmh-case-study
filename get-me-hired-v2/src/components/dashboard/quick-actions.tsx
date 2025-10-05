@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Sparkles, Upload } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +10,7 @@ export function QuickActions() {
         <CardTitle>Quick Actions</CardTitle>
         <CardDescription>Common tasks to get you started</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-3">
+      <CardContent className="grid gap-4 sm:grid-cols-2">
         <Button className="h-auto flex-col gap-2 py-6" variant="outline" asChild>
           <Link href="/applications">
             <Plus className="h-6 w-6" />
@@ -27,13 +27,6 @@ export function QuickActions() {
           </Link>
         </Button>
 
-        <Button className="h-auto flex-col gap-2 py-6" variant="outline" asChild>
-          <Link href="/profile">
-            <Upload className="h-6 w-6" />
-            <span className="font-semibold">Upload Resume</span>
-            <span className="text-xs text-muted-foreground">Auto-fill your profile</span>
-          </Link>
-        </Button>
       </CardContent>
     </Card>
   );

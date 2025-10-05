@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, LayoutDashboard, Briefcase, Sparkles, User, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, Sparkles, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
@@ -88,19 +88,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
       {/* User Menu */}
       <div className="p-4 border-t space-y-2">
-        <Button
-          variant="ghost"
-          className={`w-full gap-3 text-muted-foreground hover:text-foreground ${
-            isCollapsed ? "justify-center px-2" : "justify-start"
-          }`}
-          asChild
-          title={isCollapsed ? "Settings" : undefined}
-        >
-          <Link href="/settings">
-            <Settings className="h-5 w-5 flex-shrink-0" />
-            {!isCollapsed && <span>Settings</span>}
-          </Link>
-        </Button>
         <Button
           variant="ghost"
           className={`w-full gap-3 text-muted-foreground hover:text-foreground cursor-pointer ${
