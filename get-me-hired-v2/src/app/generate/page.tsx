@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,21 @@ interface JobApplication {
   created_at: string;
 }
 
+interface PersonalInfo {
+  full_name: string | null;
+}
+
+type ExportFormat = "pdf" | "docx";
+
+const NAME_SUFFIXES = new Set([
+  "jr",
+  "sr",
+  "ii",
+  "iii",
+  "iv",
+  "v",
+]);
+
 export default function GeneratePage() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<string>("");
@@ -28,8 +43,9 @@ export default function GeneratePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState<string>("");
-  const [generatedMetadata, setGeneratedMetadata] = useState<any>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [generatedDocumentType, setGeneratedDocumentType] = useState<"resume" | "cover_letter" | null>(null);
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
+  const [savingFormat, setSavingFormat] = useState<ExportFormat | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -43,16 +59,28 @@ export default function GeneratePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
-        .from("job_applications")
-        .select("id, company, role, job_description, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      const [applicationsResponse, personalInfoResponse] = await Promise.all([
+        supabase
+          .from("job_applications")
+          .select("id, company, role, job_description, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("personal_info")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single(),
+      ]);
 
-      if (error) throw error;
-      setApplications(data || []);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch job applications");
+      if (applicationsResponse.error) throw applicationsResponse.error;
+      setApplications(applicationsResponse.data || []);
+
+      if (!personalInfoResponse.error && personalInfoResponse.data) {
+        setPersonalInfo(personalInfoResponse.data as PersonalInfo);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to fetch job applications";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -66,13 +94,14 @@ export default function GeneratePage() {
 
     setIsGenerating(true);
     setGeneratedHtml("");
-    setGeneratedMetadata(null);
+    setGeneratedDocumentType(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const functionName = documentType === "resume" ? "generate-resume" : "generate-cover-letter";
+      const requestedDocumentType = documentType;
+      const functionName = requestedDocumentType === "resume" ? "generate-resume" : "generate-cover-letter";
 
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
@@ -90,23 +119,28 @@ export default function GeneratePage() {
       }
 
       setGeneratedHtml(data.data.html);
-      setGeneratedMetadata(data.data.metadata);
+      setGeneratedDocumentType(requestedDocumentType);
 
-      toast.success(`${documentType === "resume" ? "Resume" : "Cover Letter"} generated successfully`);
+      toast.success(`${requestedDocumentType === "resume" ? "Resume" : "Cover Letter"} generated successfully`);
 
       // Auto-scroll to preview
       setTimeout(() => {
         previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to generate document");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate document";
+      toast.error(message);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const generatePDF = async (): Promise<Blob> => {
+  const ensureDocumentAvailable = () => {
     if (!generatedHtml) throw new Error("No document to generate");
+  };
+
+  const generatePDF = async (): Promise<Blob> => {
+    ensureDocumentAvailable();
 
     // Create a temporary container
     const container = document.createElement("div");
@@ -147,39 +181,128 @@ export default function GeneratePage() {
     }
   };
 
-  const handleDownload = async () => {
+  const generateDOCX = async (): Promise<Blob> => {
+    ensureDocumentAvailable();
+
+    const htmlDocument = `<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body>${generatedHtml}</body></html>`;
+
+    const response = await fetch("/api/convert-docx", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ html: htmlDocument }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate DOCX");
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+
+    return new Blob([arrayBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  };
+
+  const getDocumentTypeLabel = (type: "resume" | "cover_letter") =>
+    type === "resume" ? "Resume" : "CoverLetter";
+
+  const lastName = useMemo(() => {
+    const fullName = personalInfo?.full_name?.trim();
+    if (!fullName) return "Document";
+
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    if (!parts.length) return "Document";
+
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+      const candidate = parts[i];
+      const normalized = candidate.replace(/[^a-z0-9]/gi, "").toLowerCase();
+
+      if (normalized && !NAME_SUFFIXES.has(normalized)) {
+        return candidate;
+      }
+    }
+
+    return parts[parts.length - 1];
+  }, [personalInfo?.full_name]);
+
+  const sanitizeSegment = (value: string | undefined | null) => {
+    if (!value) return "";
+    return value.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "");
+  };
+
+  const buildBaseFilename = () => {
+    const typeForFilename = generatedDocumentType ?? documentType;
+    const documentLabel = getDocumentTypeLabel(typeForFilename);
+    const lastNameSegment = sanitizeSegment(lastName);
+    const companySegment = sanitizeSegment(selectedApp?.company);
+
+    return [lastNameSegment || "Document", documentLabel, companySegment]
+      .filter(Boolean)
+      .join("_");
+  };
+
+  const createBlobForFormat = async (format: ExportFormat) => {
+    return format === "pdf" ? generatePDF() : generateDOCX();
+  };
+
+  const handleDownload = async (format: ExportFormat) => {
+    if (!selectedApplication) {
+      toast.error("Please select a job application first");
+      return;
+    }
+    if (!generatedDocumentType) {
+      toast.error("Please regenerate the document before downloading");
+      return;
+    }
     try {
-      const pdfBlob = await generatePDF();
-      const url = URL.createObjectURL(pdfBlob);
+      const blob = await createBlobForFormat(format);
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      const selectedApp = applications.find((app) => app.id === selectedApplication);
-      const filename = `${documentType}_${selectedApp?.company}_${selectedApp?.role}.pdf`.replace(/\s+/g, "_");
+      const extension = format === "pdf" ? "pdf" : "docx";
+      const filename = `${buildBaseFilename()}.${extension}`;
       link.download = filename;
       link.click();
       URL.revokeObjectURL(url);
 
-      toast.success("Document downloaded successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to download document");
+      toast.success(`${extension.toUpperCase()} downloaded successfully`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to download document";
+      toast.error(message);
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const handleSave = async (format: ExportFormat) => {
+    if (!selectedApplication) {
+      toast.error("Please select a job application first");
+      return;
+    }
+    if (!generatedDocumentType) {
+      toast.error("Please regenerate the document before saving");
+      return;
+    }
+    setSavingFormat(format);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const pdfBlob = await generatePDF();
+      const blob = await createBlobForFormat(format);
       const selectedApp = applications.find((app) => app.id === selectedApplication);
-      const filename = `${user.id}/${selectedApplication}/${documentType}_${Date.now()}.pdf`;
+      const extension = format === "pdf" ? "pdf" : "docx";
+      const typeForStorage = generatedDocumentType ?? documentType;
+      const baseFilename = buildBaseFilename() || `${typeForStorage}_${selectedApp?.company || "Document"}`;
+      const storageKey = `${user.id}/${selectedApplication}/${typeForStorage}/${baseFilename}_${Date.now()}.${extension}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("generated-documents")
-        .upload(filename, pdfBlob, {
-          contentType: "application/pdf",
+        .upload(storageKey, blob, {
+          contentType:
+            format === "pdf"
+              ? "application/pdf"
+              : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           upsert: false,
         });
 
@@ -188,7 +311,7 @@ export default function GeneratePage() {
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("generated-documents")
-        .getPublicUrl(filename);
+        .getPublicUrl(storageKey);
 
       // Save to database
       const { error: dbError } = await supabase
@@ -196,23 +319,25 @@ export default function GeneratePage() {
         .insert({
           user_id: user.id,
           job_application_id: selectedApplication,
-          document_type: documentType,
-          file_path: filename,
+          document_type: typeForStorage,
+          file_path: storageKey,
           file_url: publicUrl,
           generated_at: new Date().toISOString(),
         });
 
       if (dbError) throw dbError;
 
-      toast.success("Document saved to your documents");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save document");
+      toast.success(`${extension.toUpperCase()} saved to your documents`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save document";
+      toast.error(message);
     } finally {
-      setIsSaving(false);
+      setSavingFormat(null);
     }
   };
 
   const selectedApp = applications.find((app) => app.id === selectedApplication);
+  const isSaving = savingFormat !== null;
 
   return (
     <div className="flex h-screen bg-background">
@@ -316,31 +441,64 @@ export default function GeneratePage() {
         </Card>
 
         {/* Preview Section */}
-        {generatedHtml && (
+        {generatedHtml && generatedDocumentType && (
           <Card ref={previewRef}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Document Preview</CardTitle>
                   <CardDescription>
-                    Preview your generated {documentType === "resume" ? "resume" : "cover letter"}
+                    Preview your generated {generatedDocumentType === "resume" ? "resume" : "cover letter"}
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleDownload}>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownload("pdf")}
+                    className="flex items-center"
+                  >
                     <Download className="mr-2 h-4 w-4" />
-                    Download
+                    Download PDF
                   </Button>
-                  <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownload("docx")}
+                    className="flex items-center"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download DOCX
+                  </Button>
+                  <Button
+                    onClick={() => handleSave("pdf")}
+                    disabled={isSaving}
+                    className="flex items-center"
+                  >
+                    {savingFormat === "pdf" ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        Saving PDF...
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 h-4 w-4" />
-                        Save
+                        Save PDF
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleSave("docx")}
+                    disabled={isSaving}
+                    className="flex items-center"
+                  >
+                    {savingFormat === "docx" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving DOCX...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save DOCX
                       </>
                     )}
                   </Button>

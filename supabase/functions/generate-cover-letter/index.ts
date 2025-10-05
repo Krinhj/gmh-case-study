@@ -7,6 +7,40 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const COVER_LETTER_TEMPLATE = `<div style="font-family:'Times New Roman',Times,serif;font-size:12pt;line-height:1.6;color:#111;background:#fff;max-width:8.5in;margin:0 auto;padding:1in;border:1px solid #f0f0f0">
+  <div style="display:flex;justify-content:space-between;gap:24px;margin-bottom:28px">
+    <div>
+      <div style="font-size:18pt;font-weight:700">{{name}}</div>
+      {{#tagline}}<div style="font-size:11pt;color:#555;margin-top:4px">{{tagline}}</div>{{/tagline}}
+    </div>
+    <div style="text-align:right;font-size:10pt;color:#444;line-height:1.5">
+      {{#location}}<div>{{location}}</div>{{/location}}
+      {{#phone}}<div>{{phone}}</div>{{/phone}}
+      {{#email}}<div><a href="mailto:{{email}}" style="color:#444;text-decoration:none">{{email}}</a></div>{{/email}}
+      {{#links}}<div><a href="{{url}}" style="color:#444;text-decoration:none">{{label}}</a></div>{{/links}}
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px">{{current_date}}</div>
+
+  <div style="margin-bottom:20px;font-size:11pt;line-height:1.4">
+    {{#recipient_name}}<div>{{recipient_name}}</div>{{/recipient_name}}
+    <div>{{company}}</div>
+    {{#company_address}}<div>{{company_address}}</div>{{/company_address}}
+  </div>
+
+  <div style="margin-bottom:20px">{{salutation}},</div>
+
+  <div style="margin-bottom:28px">
+    {{#paragraphs}}<p style="margin-bottom:16px;text-align:justify">{{.}}</p>{{/paragraphs}}
+  </div>
+
+  <div>
+    <div style="margin-bottom:40px">Sincerely,</div>
+    <div style="font-weight:700">{{name}}</div>
+  </div>
+</div>`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -75,6 +109,9 @@ serve(async (req) => {
       email: personalInfo.data.email,
       phone: personalInfo.data.phone,
       location: personalInfo.data.location,
+      github: personalInfo.data.github_url,
+      portfolio: personalInfo.data.portfolio_url,
+      linkedin: personalInfo.data.linkedin_url,
       work_experience: workExperience.data?.map((exp) => ({
         company: exp.company,
         role: exp.role,
@@ -182,25 +219,82 @@ Write a compelling cover letter for this application.`;
     const openaiData = await openaiResponse.json();
     const generatedContent = JSON.parse(openaiData.choices[0].message.content);
 
-    // 5. Load HTML template and inject content
-    const templatePath = new URL("../../../templates/html/cover-letter.html", import.meta.url);
-    const templateResponse = await fetch(templatePath);
-    const htmlTemplate = await templateResponse.text();
+    const toPlainText = (value: unknown): string => {
+      if (typeof value === "string") {
+        return value.trim();
+      }
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter(Boolean)
+          .join(" ");
+      }
+      return "";
+    };
 
-    // Prepare data for Mustache
+    const toParagraphs = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => (typeof item === "string" ? item.trim() : ""))
+          .filter(Boolean);
+      }
+      if (typeof value === "string") {
+        return value
+          .split(/\r?\n\r?\n/)
+          .map((paragraph) => paragraph.trim())
+          .filter(Boolean);
+      }
+      return [];
+    };
+
+    const paragraphs = toParagraphs(generatedContent.paragraphs);
+    if (!paragraphs.length) {
+      const fallbackParagraph = toPlainText(
+        generatedContent.body ?? generatedContent.content ?? ""
+      );
+      if (fallbackParagraph) {
+        paragraphs.push(fallbackParagraph);
+      }
+    }
+
+    const links: Array<{ label: string; url: string }> = [];
+    if (profileContext.linkedin) {
+      links.push({ label: "LinkedIn", url: profileContext.linkedin });
+    }
+    if (profileContext.github) {
+      links.push({ label: "GitHub", url: profileContext.github });
+    }
+    if (profileContext.portfolio) {
+      links.push({ label: "Portfolio", url: profileContext.portfolio });
+    }
+
+    const recipientName =
+      toPlainText(generatedContent.recipient ?? generatedContent.hiring_manager ?? "") ||
+      undefined;
+
+    const salutation =
+      toPlainText(generatedContent.salutation) || "Dear Hiring Manager";
+
     const mustacheData = {
       name: profileContext.name,
+      tagline: jobContext.role ? `${jobContext.role} Candidate` : undefined,
       location: profileContext.location,
       phone: profileContext.phone,
       email: profileContext.email,
+      links,
+      current_date: new Date().toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+      recipient_name: recipientName,
       company: jobContext.company,
       company_address: jobContext.location || "",
-      salutation: generatedContent.salutation,
-      paragraphs: generatedContent.paragraphs,
-      hiring_manager: null, // Could be extracted from job app if available
+      salutation,
+      paragraphs,
     };
 
-    const compiledHtml = Mustache.render(htmlTemplate, mustacheData);
+    const compiledHtml = Mustache.render(COVER_LETTER_TEMPLATE, mustacheData);
 
     // 6. Return HTML and content for client-side PDF generation
     // The client will use jsPDF + html2canvas to convert HTML to PDF
