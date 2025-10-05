@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter - {{name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', 'Times', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            background: #fff;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in 1in;
+        }
+
+        /* Sender Information */
+        .sender-info {
+            margin-bottom: 30px;
+        }
+
+        .sender-name {
+            font-weight: bold;
+            font-size: 13pt;
+            margin-bottom: 4px;
+        }
+
+        .sender-contact {
+            font-size: 11pt;
+            line-height: 1.4;
+        }
+
+        /* Date */
+        .date {
+            margin-bottom: 30px;
+        }
+
+        /* Recipient Information */
+        .recipient-info {
+            margin-bottom: 30px;
+        }
+
+        .recipient-line {
+            line-height: 1.4;
+        }
+
+        /* Salutation */
+        .salutation {
+            margin-bottom: 20px;
+        }
+
+        /* Letter Body */
+        .letter-body {
+            text-align: justify;
+        }
+
+        .paragraph {
+            margin-bottom: 16px;
+            text-indent: 0;
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 30px;
+            margin-bottom: 60px;
+        }
+
+        .signature-space {
+            margin-top: 50px;
+            margin-bottom: 4px;
+        }
+
+        .signature-name {
+            font-weight: normal;
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                padding: 0.75in 1in;
+            }
+        }
+
+        /* Professional styling */
+        a {
+            color: #000;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sender Information -->
+    <div class="sender-info">
+        <div class="sender-name">{{name}}</div>
+        <div class="sender-contact">
+            {{location}}<br>
+            {{phone}}<br>
+            <a href="mailto:{{email}}">{{email}}</a>
+        </div>
+    </div>
+
+    <!-- Date -->
+    <div class="date">
+        <script>document.write(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))</script>
+    </div>
+
+    <!-- Recipient Information -->
+    <div class="recipient-info">
+        {{#hiring_manager}}
+        <div class="recipient-line">{{hiring_manager}}</div>
+        {{/hiring_manager}}
+        <div class="recipient-line">{{company}}</div>
+        {{#company_address}}
+        <div class="recipient-line">{{company_address}}</div>
+        {{/company_address}}
+    </div>
+
+    <!-- Salutation -->
+    <div class="salutation">
+        {{salutation}},
+    </div>
+
+    <!-- Letter Body -->
+    <div class="letter-body">
+        {{#paragraphs}}
+        <div class="paragraph">{{.}}</div>
+        {{/paragraphs}}
+    </div>
+
+    <!-- Closing -->
+    <div class="closing">
+        <div>Sincerely,</div>
+        <div class="signature-space"></div>
+        <div class="signature-name">{{name}}</div>
+    </div>
+</body>
+</html>

@@ -25,7 +25,7 @@ import {
   StickyNote,
   Info,
 } from "lucide-react";
-import { MatchInsightsDialog } from "@/components/applications/match-insights-dialog";
+import { MatchInsightsDialog, type MatchInsights } from "@/components/applications/match-insights-dialog";
 
 type JobApplication = {
   id: string;
@@ -35,6 +35,7 @@ type JobApplication = {
   job_description: string | null;
   status: "applied" | "interviewing" | "offer" | "rejected";
   match_score: number | null;
+  match_insights: MatchInsights | null;
   notes: string | null;
   date_applied: string;
   created_at: string;
@@ -137,30 +138,108 @@ export default function ApplicationViewPage() {
     }
   }, [id, router]);
 
-  const handleSave = async (data: any) => {
+  const analyzeAndStoreMatch = async (applicationId: string) => {
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
+    const cacheKey = `job_applications_${userId}`;
+
+    const { data, error } = await supabase.functions.invoke('analyze-job-match', {
+      body: {
+        user_id: userId,
+        job_application_id: applicationId,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || "Failed to analyze match");
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || "Match analysis failed");
+    }
+
+    const insights: MatchInsights = data.data;
+
+    const { data: updatedApp, error: updateError } = await supabase
+      .from("job_applications")
+      .update({
+        match_score: insights.match_score ?? null,
+        match_insights: insights,
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    sessionStorage.setItem(
+      `match_insights_${applicationId}`,
+      JSON.stringify(insights)
+    );
+
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const cachedApps: JobApplication[] = JSON.parse(cached);
+        const updatedCache = cachedApps.map((app) =>
+          app.id === applicationId ? { ...app, ...updatedApp } : app
+        );
+        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+      } catch (cacheError) {
+        console.error("Error updating cached applications:", cacheError);
+      }
+    }
+
+    return { updatedApp: updatedApp as JobApplication, insights } as const;
+  };
+
+  const handleSave = async (data: JobApplication) => {
     if (!userId || !application) return;
 
     try {
+      const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
+      void _matchScore;
+      void _matchInsights;
+      void _ignoredId;
+
       const { data: updatedApp, error } = await supabase
         .from("job_applications")
-        .update(data)
+        .update(rest)
         .eq("id", application.id)
         .select()
         .single();
 
       if (error) throw error;
 
-      setApplication(updatedApp);
+      let finalApp = updatedApp as JobApplication;
 
-      // Update cache
+      try {
+        const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(updatedApp.id);
+        finalApp = analyzedApp;
+        toast.success(`Match score: ${insights.match_score}%`);
+      } catch (analysisError) {
+        console.error("Match analysis failed:", analysisError);
+        toast.error("Updated, but match analysis failed. Try again later.");
+      }
+
+      setApplication(finalApp);
+
       const cacheKey = `job_applications_${userId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
-        const cachedApps = JSON.parse(cached);
-        const updatedApps = cachedApps.map((app: JobApplication) =>
-          app.id === updatedApp.id ? updatedApp : app
-        );
-        localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
+        try {
+          const cachedApps = JSON.parse(cached) as JobApplication[];
+          const updatedApps = cachedApps.map((app) =>
+            app.id === finalApp.id ? finalApp : app
+          );
+          localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
+        } catch (cacheError) {
+          console.error("Error updating cached applications:", cacheError);
+        }
       }
 
       toast.success("Application updated successfully");
@@ -527,6 +606,18 @@ export default function ApplicationViewPage() {
             applicationId={application.id}
             userId={userId}
             currentMatchScore={application.match_score || 0}
+            initialInsights={application.match_insights}
+            onInsightsUpdate={(latest) =>
+              setApplication((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      match_insights: latest,
+                      match_score: latest.match_score,
+                    }
+                  : prev
+              )
+            }
           />
         )}
       </main>

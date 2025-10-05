@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, LayoutDashboard, Briefcase, Sparkles, User, Settings, LogOut } from "lucide-react";
+import { FileText, LayoutDashboard, Briefcase, Sparkles, User, Settings, LogOut, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/applications", label: "Applications", icon: Briefcase },
   { href: "/generate", label: "Generate", icon: Sparkles },
+  { href: "/documents", label: "Documents", icon: FolderOpen },
   { href: "/profile", label: "Profile", icon: User },
 ];
 

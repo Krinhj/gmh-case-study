@@ -78,9 +78,18 @@ After signup, users go through streamlined onboarding:
    - Redirect to Dashboard
 
 **Post-Onboarding:**
-- Profile page allows manual editing of all sections
-- Re-upload resume anytime → Option to "Replace all" or "Merge with existing"
+- Profile page allows manual editing of all sections with full CRUD capabilities
+- Original uploaded resume stored in Supabase Storage for reference
+- No re-upload/merge functionality - users manually edit profile data as needed
 - Demonstrates data ingestion + parsing capabilities
+
+**Resume Storage & Viewing:**
+- Original resume uploaded during onboarding stored in Supabase Storage
+- Dedicated `/resumes` page displays all resumes:
+  - Original uploaded resume (from onboarding)
+  - AI-generated tailored resumes (from job applications)
+- Users can view, download, and manage all resume versions in one place
+- Resume files stored with metadata (type, created_at, job_application_id for generated ones)
 
 **AI Skill Detection & Suggestion (Planned Feature):**
 - When users add/edit Experience, Education, or Projects entries with rich data (technologies, coursework, etc.)
