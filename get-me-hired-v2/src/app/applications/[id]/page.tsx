@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -346,7 +347,17 @@ export default function ApplicationViewPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <Link href={`/applications/${application.id}/documents`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Documents
+                  </Link>
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
