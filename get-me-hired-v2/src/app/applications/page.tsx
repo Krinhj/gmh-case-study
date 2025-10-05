@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import type { MatchInsights } from "@/components/applications/match-insights-dialog";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ type JobApplication = {
   job_description: string | null;
   status: "applied" | "interviewing" | "offer" | "rejected";
   match_score: number | null;
+  match_insights: MatchInsights | null;
   notes: string | null;
   date_applied: string;
   created_at: string;
@@ -154,37 +156,130 @@ export default function ApplicationsPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = async (data: any) => {
+  const analyzeAndStoreMatch = async (applicationId: string) => {
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
+    const cacheKey = `job_applications_${userId}`;
+
+    const { data, error } = await supabase.functions.invoke('analyze-job-match', {
+      body: {
+        user_id: userId,
+        job_application_id: applicationId,
+      },
+    });
+
+    if (error) {
+      throw new Error(error.message || "Failed to analyze match");
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || "Match analysis failed");
+    }
+
+    const insights: MatchInsights = data.data;
+
+    const { data: updatedApp, error: updateError } = await supabase
+      .from("job_applications")
+      .update({
+        match_score: insights.match_score ?? null,
+        match_insights: insights,
+      })
+      .eq("id", applicationId)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    sessionStorage.setItem(
+      `match_insights_${applicationId}`,
+      JSON.stringify(insights)
+    );
+
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const cachedData: JobApplication[] = JSON.parse(cached);
+        const updatedCache = cachedData.map((app) =>
+          app.id === applicationId ? { ...app, ...updatedApp } : app
+        );
+        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+      } catch (cacheError) {
+        console.error("Error updating cached insights:", cacheError);
+      }
+    }
+
+    return { updatedApp: updatedApp as JobApplication, insights } as const;
+  };
+
+  const handleSave = async (data: JobApplication) => {
     if (!userId) return;
 
     const cacheKey = `job_applications_${userId}`;
 
     try {
       if (dialogMode === "add") {
+        const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
+        void _matchScore;
+        void _matchInsights;
+        void _ignoredId;
+
         const { data: newApp, error } = await supabase
           .from("job_applications")
-          .insert([{ ...data, user_id: userId }])
+          .insert([{ ...rest, user_id: userId }])
           .select()
           .single();
 
         if (error) throw error;
 
-        const updatedApps = [newApp, ...applications];
+        let finalApp = newApp as JobApplication;
+
+        try {
+          const { updatedApp, insights } = await analyzeAndStoreMatch(newApp.id);
+          finalApp = updatedApp;
+          toast.success(`Match score: ${insights.match_score}%`);
+        } catch (analysisError) {
+          console.error("Match analysis failed:", analysisError);
+          toast.error("Saved, but match analysis failed. Try again later.");
+        }
+
+        const updatedApps = [finalApp, ...applications];
         setApplications(updatedApps);
         localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
         toast.success("Application added successfully");
       } else {
+        if (!editingApplication) return;
+
+        const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
+        void _matchScore;
+        void _matchInsights;
+        void _ignoredId;
+
         const { data: updatedApp, error } = await supabase
           .from("job_applications")
-          .update(data)
-          .eq("id", editingApplication?.id)
+          .update(rest)
+          .eq("id", editingApplication.id)
           .select()
           .single();
 
         if (error) throw error;
 
+        let finalApp = updatedApp as JobApplication;
+
+        try {
+          const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(updatedApp.id);
+          finalApp = analyzedApp;
+          toast.success(`Match score: ${insights.match_score}%`);
+        } catch (analysisError) {
+          console.error("Match analysis failed:", analysisError);
+          toast.error("Updated, but match analysis failed. Try again later.");
+        }
+
         const updatedApps = applications.map((app) =>
-          app.id === updatedApp.id ? updatedApp : app
+          app.id === finalApp.id ? finalApp : app
         );
         setApplications(updatedApps);
         localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
@@ -234,50 +329,23 @@ export default function ApplicationsPage() {
     toast.loading("Analyzing match score...", { id: `analyzing-${applicationId}` });
 
     try {
-      // Call Edge Function directly
-      const { data, error } = await supabase.functions.invoke('analyze-job-match', {
-        body: {
-          user_id: userId,
-          job_application_id: applicationId,
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || "Failed to analyze match");
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || "Match analysis failed");
-      }
-
-      // Refresh applications to get updated match score
-      const { data: updatedApp } = await supabase
-        .from("job_applications")
-        .select("*")
-        .eq("id", applicationId)
-        .single();
+      const { updatedApp, insights } = await analyzeAndStoreMatch(applicationId);
 
       if (updatedApp) {
         const updatedApps = applications.map((app) =>
           app.id === applicationId ? updatedApp : app
         );
         setApplications(updatedApps);
-        setFilteredApplications(updatedApps);
 
         const cacheKey = `job_applications_${userId}`;
         localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
       }
 
-      // Cache insights in sessionStorage for smart hybrid approach
-      sessionStorage.setItem(
-        `match_insights_${applicationId}`,
-        JSON.stringify(data.data)
-      );
-
-      toast.success(`Match score: ${data.data.match_score}%`, { id: `analyzing-${applicationId}` });
-    } catch (error: any) {
+      toast.success(`Match score: ${insights.match_score}%`, { id: `analyzing-${applicationId}` });
+    } catch (error) {
       console.error("Error analyzing match:", error);
-      toast.error(error.message || "Failed to analyze match", { id: `analyzing-${applicationId}` });
+      const message = error instanceof Error ? error.message : "Failed to analyze match";
+      toast.error(message, { id: `analyzing-${applicationId}` });
     } finally {
       setAnalyzingId(null);
     }

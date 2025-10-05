@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,8 @@ type MatchInsightsDialogProps = {
   applicationId: string;
   userId: string;
   currentMatchScore: number;
+  initialInsights?: MatchInsights | null;
+  onInsightsUpdate?: (insights: MatchInsights) => void;
 };
 
 export function MatchInsightsDialog({
@@ -34,27 +36,45 @@ export function MatchInsightsDialog({
   applicationId,
   userId,
   currentMatchScore,
+  initialInsights,
+  onInsightsUpdate,
 }: MatchInsightsDialogProps) {
   const [insights, setInsights] = useState<MatchInsights | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load insights from sessionStorage when dialog opens
-  const loadInsights = () => {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setIsLoading(true);
+
     const cached = sessionStorage.getItem(`match_insights_${applicationId}`);
     if (cached) {
       try {
         const parsedInsights: MatchInsights = JSON.parse(cached);
         setInsights(parsedInsights);
         setIsLoading(false);
+        return;
       } catch (e) {
         console.error("Error parsing cached insights:", e);
-        setIsLoading(false);
       }
-    } else {
-      setIsLoading(false);
     }
-  };
+
+    if (initialInsights) {
+      setInsights(initialInsights);
+      sessionStorage.setItem(
+        `match_insights_${applicationId}`,
+        JSON.stringify(initialInsights)
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    setInsights(null);
+    setIsLoading(false);
+  }, [open, applicationId, initialInsights]);
 
   // Re-analyze match score
   const handleReanalyze = async () => {
@@ -62,41 +82,67 @@ export function MatchInsightsDialog({
     toast.loading("Re-analyzing match score...", { id: "reanalyze" });
 
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-job-match', {
-        body: {
-          user_id: userId,
-          job_application_id: applicationId,
-        },
-      });
+    const { data, error } = await supabase.functions.invoke('analyze-job-match', {
+      body: {
+        user_id: userId,
+        job_application_id: applicationId,
+      },
+    });
 
-      if (error) {
-        throw new Error(error.message || "Failed to analyze match");
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || "Match analysis failed");
-      }
-
-      // Update sessionStorage cache
-      sessionStorage.setItem(
-        `match_insights_${applicationId}`,
-        JSON.stringify(data.data)
-      );
-
-      setInsights(data.data);
-      toast.success(`Match score updated: ${data.data.match_score}%`, { id: "reanalyze" });
-    } catch (error: any) {
-      console.error("Error re-analyzing match:", error);
-      toast.error(error.message || "Failed to re-analyze match", { id: "reanalyze" });
-    } finally {
-      setIsAnalyzing(false);
+    if (error) {
+      throw new Error(error.message || "Failed to analyze match");
     }
-  };
 
-  // Load insights when dialog opens
-  if (open && isLoading) {
-    loadInsights();
+    if (!data.success) {
+      throw new Error(data.error || "Match analysis failed");
+    }
+
+    const insights: MatchInsights = data.data;
+
+    const { error: updateError } = await supabase
+      .from("job_applications")
+      .update({
+        match_score: insights.match_score ?? null,
+        match_insights: insights,
+      })
+      .eq("id", applicationId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    sessionStorage.setItem(
+      `match_insights_${applicationId}`,
+      JSON.stringify(insights)
+    );
+
+    const cacheKey = `job_applications_${userId}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const cachedData = JSON.parse(cached) as Array<Record<string, unknown>>;
+        const updatedCache = cachedData.map((app) =>
+          app.id === applicationId
+            ? { ...app, match_score: insights.match_score ?? null, match_insights: insights }
+            : app
+        );
+        localStorage.setItem(cacheKey, JSON.stringify(updatedCache));
+      } catch (cacheError) {
+        console.error("Error updating cached applications:", cacheError);
+      }
+    }
+
+    setInsights(insights);
+    onInsightsUpdate?.(insights);
+    toast.success(`Match score updated: ${insights.match_score}%`, { id: "reanalyze" });
+  } catch (error) {
+    console.error("Error re-analyzing match:", error);
+    const message = error instanceof Error ? error.message : "Failed to re-analyze match";
+    toast.error(message, { id: "reanalyze" });
+  } finally {
+    setIsAnalyzing(false);
   }
+  };
 
   // Calculate staleness
   const getStaleness = () => {

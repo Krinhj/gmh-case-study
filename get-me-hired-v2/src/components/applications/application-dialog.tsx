@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import type { MatchInsights } from "@/components/applications/match-insights-dialog";
 
 type JobApplication = {
   id?: string;
@@ -17,6 +18,7 @@ type JobApplication = {
   job_description: string | null;
   status: "applied" | "interviewing" | "offer" | "rejected";
   match_score: number | null;
+  match_insights: MatchInsights | null;
   notes: string | null;
   date_applied: string;
   location: string | null;
@@ -50,6 +52,7 @@ export function ApplicationDialog({
     job_description: null,
     status: "applied",
     match_score: null,
+    match_insights: null,
     notes: null,
     date_applied: new Date().toISOString().split("T")[0],
     location: null,
@@ -82,6 +85,7 @@ export function ApplicationDialog({
         job_description: null,
         status: "applied",
         match_score: null,
+        match_insights: null,
         notes: null,
         date_applied: new Date().toISOString().split("T")[0],
         location: null,
