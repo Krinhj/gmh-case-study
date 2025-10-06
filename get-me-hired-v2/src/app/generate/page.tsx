@@ -282,6 +282,16 @@ export default function GeneratePage() {
   const generatePDF = async (): Promise<Blob> => {
     ensureDocumentAvailable();
 
+    const root = document.documentElement;
+    const previousColorMode = root.getAttribute("data-color-mode");
+    const previousTransition = root.style.transition;
+    const shouldOverrideColorMode = previousColorMode !== "basic";
+
+    root.style.transition = "none";
+    if (shouldOverrideColorMode) {
+      root.setAttribute("data-color-mode", "basic");
+    }
+
     // Create a temporary container
     const container = document.createElement("div");
     container.innerHTML = generatedHtml;
@@ -316,6 +326,14 @@ export default function GeneratePage() {
       // Return as blob
       return pdf.output("blob");
     } finally {
+      if (shouldOverrideColorMode) {
+        if (previousColorMode) {
+          root.setAttribute("data-color-mode", previousColorMode);
+        } else {
+          root.removeAttribute("data-color-mode");
+        }
+      }
+      root.style.transition = previousTransition;
       // Clean up
       document.body.removeChild(container);
     }

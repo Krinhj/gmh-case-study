@@ -58,7 +58,7 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
     onUpdate(updated);
   };
 
-  const updateExperience = (id: string, field: keyof ExperienceEntry, value: any) => {
+  const updateExperience = <K extends keyof ExperienceEntry>(id: string, field: K, value: ExperienceEntry[K]) => {
     const updated = experiences.map((exp) =>
       exp.id === id ? { ...exp, [field]: value } : exp
     );
@@ -245,7 +245,7 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
       {experiences.length === 0 && (
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            Don't have work experience yet?
+            Don&apos;t have work experience yet?
           </p>
           <Button type="button" variant="link" onClick={onNext}>
             Skip to Education
@@ -269,3 +269,4 @@ export function WorkExperienceStep({ data, onUpdate, onNext, onBack }: WorkExper
     </form>
   );
 }
+

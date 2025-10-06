@@ -1,3 +1,4 @@
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 // Helper function to clear user-specific cached data
@@ -109,7 +110,9 @@ export const authHelpers = {
   },
 
   // Listen to auth state changes
-  onAuthStateChange: (callback: (event: string, session: any) => void) => {
+  onAuthStateChange: (callback: (event: string, session: Session | null) => void) => {
     return supabase.auth.onAuthStateChange(callback);
   },
 };
+
+

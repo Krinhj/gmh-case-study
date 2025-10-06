@@ -20,7 +20,7 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
     }
 
     return !!data;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error checking onboarding status:', error);
     return false;
   }
@@ -251,12 +251,13 @@ export async function saveOnboardingData(userId: string, data: OnboardingData) {
     console.error('Error saving onboarding data (raw):', error);
     console.error('Error saving onboarding data (stringified):', JSON.stringify(error, null, 2));
     if (error && typeof error === 'object') {
+      const partial = error as Partial<Record<'message' | 'code' | 'details' | 'hint' | 'stack', unknown>>;
       console.error('Error properties:', {
-        message: (error as any).message,
-        code: (error as any).code,
-        details: (error as any).details,
-        hint: (error as any).hint,
-        stack: (error as any).stack,
+        message: typeof partial.message === 'string' ? partial.message : undefined,
+        code: typeof partial.code === 'string' ? partial.code : undefined,
+        details: typeof partial.details === 'string' ? partial.details : undefined,
+        hint: typeof partial.hint === 'string' ? partial.hint : undefined,
+        stack: typeof partial.stack === 'string' ? partial.stack : undefined,
       });
     }
     return { success: false, error };

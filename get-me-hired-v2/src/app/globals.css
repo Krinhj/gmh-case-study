@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -68,315 +68,235 @@
 :root {
   --radius: 0.5rem;
 
-  --primary: oklch(0.65 0.08 260);
-  --primary-foreground: oklch(0.12 0.02 260);
+  --primary: #6366f1;
+  --primary-foreground: #0f172a;
 
-  --secondary: oklch(0.4 0.1 80);
-  --secondary-foreground: oklch(0.98 0.02 260);
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
 
-  --accent: oklch(0.9 0.02 260);
-  --accent-foreground: oklch(0.26 0.02 260);
+  --accent: #e0e7ff;
+  --accent-foreground: #1f2937;
 
-  --button-elevated: oklch(0.94 0.01 260);
+  --button-elevated: #eef2ff;
 
-  --success: oklch(0.5 0.05 160);
-  --success-foreground: oklch(0.98 0.02 260);
+  --success: #22c55e;
+  --success-foreground: #0f172a;
 
-  --warning: oklch(0.5 0.05 100);
-  --warning-foreground: oklch(0.2 0.03 80);
+  --warning: #f59e0b;
+  --warning-foreground: #1f2937;
 
-  --destructive: oklch(0.5 0.05 30);
-  --destructive-foreground: oklch(0.98 0.02 260);
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --info: oklch(0.5 0.05 260);
-  --info-foreground: oklch(0.98 0.02 260);
+  --info: #0ea5e9;
+  --info-foreground: #0f172a;
 
-  --background: oklch(0.96 0.01 260);
-  --foreground: oklch(0.15 0.02 260);
+  --background: #f8fafc;
+  --foreground: #0f172a;
 
-  --card: oklch(1 0.01 260);
-  --card-foreground: oklch(0.15 0.02 260);
+  --card: #ffffff;
+  --card-foreground: #0f172a;
 
-  --popover: oklch(1 0.01 260);
-  --popover-foreground: oklch(0.15 0.02 260);
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
-  --muted: oklch(0.92 0.01 260);
-  --muted-foreground: oklch(0.4 0.02 260);
+  --muted: #e2e8f0;
+  --muted-foreground: #475569;
 
-  --highlight: oklch(1 0.02 260);
-  --control-surface: oklch(0.98 0.01 260);
-  --border: oklch(0.6 0.02 260);
-  --border-muted: oklch(0.7 0.02 260);
-  --card-border-top: oklch(0.82 0.01 260);
-  --card-border-bottom: oklch(0.99 0.008 260);
-  --card-border-sides: oklch(0.9 0.01 260);
-  --input: oklch(0.85 0.02 260);
-  --ring: oklch(0.65 0.08 260);
+  --highlight: #f5f3ff;
+  --control-surface: #f1f5f9;
+  --border: #cbd5f5;
+  --border-muted: #e5e7eb;
+  --card-border-top: rgba(255, 255, 255, 0.6);
+  --card-border-bottom: rgba(15, 23, 42, 0.08);
+  --card-border-sides: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #6366f1;
 
-  --sidebar: oklch(0.94 0.01 260);
-  --sidebar-foreground: oklch(0.18 0.02 260);
-  --sidebar-primary: oklch(0.4 0.1 260);
-  --sidebar-primary-foreground: oklch(0.98 0.02 260);
-  --sidebar-accent: oklch(0.92 0.01 260);
-  --sidebar-accent-foreground: oklch(0.24 0.02 260);
-  --sidebar-border: oklch(0.68 0.02 260);
-  --sidebar-ring: oklch(0.4 0.1 260);
+  --sidebar: #eef2ff;
+  --sidebar-foreground: #1f2937;
+  --sidebar-primary: #4338ca;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #e0e7ff;
+  --sidebar-accent-foreground: #312e81;
+  --sidebar-border: #c7d2fe;
+  --sidebar-ring: #4338ca;
 
-  --status-saved: oklch(0.92 0.01 260);
-  --status-applied: oklch(0.4 0.1 260);
-  --status-interviewing: oklch(0.5 0.05 100);
-  --status-offer: oklch(0.5 0.05 160);
-  --status-rejected: oklch(0.5 0.05 30);
-  --status-accepted: oklch(0.4 0.1 80);
+  --status-saved: #e2e8f0;
+  --status-applied: #6366f1;
+  --status-interviewing: #f59e0b;
+  --status-offer: #22c55e;
+  --status-rejected: #ef4444;
+  --status-accepted: #0ea5e9;
 
-  --match-high: oklch(0.5 0.05 160);
-  --match-medium: oklch(0.5 0.05 100);
-  --match-low: oklch(0.5 0.05 30);
+  --match-high: #22c55e;
+  --match-medium: #f59e0b;
+  --match-low: #ef4444;
 
-  --shadow-base: oklch(0.45 0.02 260);
-
-  --shadow-s: inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
-    0 1px 2px color-mix(in srgb, black 8%, transparent),
-    0 3px 6px color-mix(in srgb, black 5%, transparent);
-  --shadow-m: inset 0 1px 0 color-mix(in srgb, white 75%, transparent),
-    0 3px 6px color-mix(in srgb, black 12%, transparent),
-    0 8px 16px color-mix(in srgb, black 8%, transparent);
-  --shadow-l: inset 0 1px 0 color-mix(in srgb, white 80%, transparent),
-    0 6px 10px color-mix(in srgb, black 16%, transparent),
-    0 16px 32px color-mix(in srgb, black 10%, transparent);
+  --shadow-base: rgba(15, 23, 42, 0.35);
+  --shadow-s: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-m: 0 4px 12px rgba(15, 23, 42, 0.12);
+  --shadow-l: 0 12px 24px rgba(15, 23, 42, 0.14);
 }
-
-/* ===== Dark Mode ===== */
 .dark {
-  --primary: oklch(1 0 0);
-  --primary-foreground: oklch(0.10 0.01 260);
+  --primary: #a855f7;
+  --primary-foreground: #0b1120;
 
-  --secondary: oklch(0.74 0.10 80);
-  --secondary-foreground: oklch(0.10 0.01 260);
+  --secondary: #1f2937;
+  --secondary-foreground: #f8fafc;
 
-  --accent: oklch(0.48 0.02 260);
-  --accent-foreground: oklch(0.96 0.02 260);
+  --accent: #312e81;
+  --accent-foreground: #e0e7ff;
 
-  --button-elevated: oklch(0.34 0.012 260);
+  --button-elevated: #1f2937;
 
-  --success: oklch(0.66 0.05 160);
-  --warning: oklch(0.66 0.05 100);
-  --destructive: oklch(0.66 0.05 30);
-  --info: oklch(0.66 0.05 260);
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --destructive: #f87171;
+  --info: #38bdf8;
 
-  --background: oklch(0.10 0.01 260);
-  --foreground: oklch(0.96 0.02 260);
+  --background: #0f172a;
+  --foreground: #f8fafc;
 
-  --card: oklch(0.26 0.01 260);
-  --card-foreground: oklch(0.96 0.02 260);
+  --card: #1f2937;
+  --card-foreground: #f8fafc;
 
-  --popover: oklch(0.12 0.01 260);
-  --popover-foreground: oklch(0.96 0.02 260);
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
 
-  --muted: oklch(0.18 0.012 260);
-  --muted-foreground: oklch(0.76 0.02 260);
+  --muted: #1e293b;
+  --muted-foreground: #cbd5f5;
 
-  --highlight: oklch(0.40 0.01 260);
-  --control-surface: oklch(0.42 0.01 260);
-  --card-border-top: oklch(0.40 0.01 260);
-  --card-border-bottom: oklch(0.18 0.01 260);
-  --border: oklch(0.18 0.01 260);
-  --border-muted: oklch(0.22 0.015 260);
-  --input: oklch(0.28 0.02 260);
-  --ring: oklch(0.85 0 0);
+  --highlight: rgba(148, 163, 184, 0.22);
+  --control-surface: #1e293b;
+  --border: rgba(148, 163, 184, 0.35);
+  --border-muted: rgba(148, 163, 184, 0.2);
+  --card-border-top: rgba(255, 255, 255, 0.06);
+  --card-border-bottom: rgba(15, 23, 42, 0.5);
+  --card-border-sides: rgba(148, 163, 184, 0.25);
+  --input: rgba(148, 163, 184, 0.3);
+  --ring: #a855f7;
 
-  --sidebar: oklch(0.12 0.01 260);
-  --sidebar-foreground: oklch(0.96 0.02 260);
-  --sidebar-primary: oklch(0.72 0.10 260);
-  --sidebar-primary-foreground: oklch(0.10 0.01 260);
-  --sidebar-accent: oklch(0.18 0.015 260);
-  --sidebar-accent-foreground: oklch(0.96 0.02 260);
-  --sidebar-border: oklch(0.22 0.015 260);
-  --sidebar-ring: oklch(0.72 0.10 260);
+  --sidebar: #111827;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #f8fafc;
+  --sidebar-accent: #1e1b4b;
+  --sidebar-accent-foreground: #e0e7ff;
+  --sidebar-border: rgba(148, 163, 184, 0.3);
+  --sidebar-ring: #7c3aed;
 
-  --status-saved: oklch(0.36 0.02 260);
-  --status-applied: oklch(0.72 0.10 260);
-  --status-interviewing: oklch(0.66 0.05 100);
-  --status-offer: oklch(0.66 0.05 160);
-  --status-rejected: oklch(0.66 0.05 30);
-  --status-accepted: oklch(0.74 0.10 80);
+  --status-saved: rgba(148, 163, 184, 0.35);
+  --status-applied: #7c3aed;
+  --status-interviewing: #fbbf24;
+  --status-offer: #4ade80;
+  --status-rejected: #f87171;
+  --status-accepted: #38bdf8;
 
-  --match-high: oklch(0.66 0.05 160);
-  --match-medium: oklch(0.66 0.05 100);
-  --match-low: oklch(0.66 0.05 30);
+  --match-high: #4ade80;
+  --match-medium: #fbbf24;
+  --match-low: #f87171;
 
-  --shadow-base: oklch(0.06 0.003 260);
-
-  --shadow-s: inset 0 1px 2px color-mix(in oklch, var(--highlight) 65%, transparent),
-    0 1px 2px color-mix(in oklch, oklch(0.05 0.003 260) 70%, transparent),
-    0 2px 4px color-mix(in oklch, oklch(0.08 0.003 260) 40%, transparent);
-  --shadow-m: inset 0 1px 2px color-mix(in oklch, var(--highlight) 75%, transparent),
-    0 2px 4px color-mix(in oklch, oklch(0.05 0.003 260) 75%, transparent),
-    0 4px 8px color-mix(in oklch, oklch(0.10 0.003 260) 40%, transparent);
-  --shadow-l: inset 0 1px 2px color-mix(in oklch, var(--highlight) 85%, transparent),
-    0 4px 6px color-mix(in oklch, oklch(0.05 0.003 260) 80%, transparent),
-    0 6px 12px color-mix(in oklch, oklch(0.12 0.003 260) 40%, transparent);
+  --shadow-base: rgba(8, 11, 18, 0.75);
+  --shadow-s: 0 2px 6px rgba(8, 11, 18, 0.6);
+  --shadow-m: 0 10px 18px rgba(8, 11, 18, 0.55);
+  --shadow-l: 0 18px 32px rgba(8, 11, 18, 0.5);
 }
-
-
-/* ===== Component Enhancements ===== */
 @layer components {
   :root .sidebar-active {
-  background: color-mix(in oklch, var(--background) 15%, white 85%);
-  color: var(--foreground);
-  border-top: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
-  border-left: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
-  border-right: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
-  border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 65%, transparent),
-    inset 0 -1px 0 color-mix(in oklch, var(--border) 45%, transparent),
-    0 10px 20px -12px color-mix(in oklch, var(--border) 55%, transparent),
-    0 4px 8px -6px color-mix(in oklch, black 18%, transparent);
+    background: var(--accent);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
   }
 
   .dark .sidebar-active {
-    background: color-mix(in oklch, var(--background) 30%, white 10%);
+    background: rgba(148, 163, 184, 0.15);
     color: var(--primary-foreground);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 45%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, black 30%, transparent),
-      0 10px 18px -12px color-mix(in oklch, black 60%, transparent);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: var(--shadow-s);
   }
 
   .auth-input {
-    background: color-mix(in oklch, white 92%, var(--background) 8%);
-    border-color: color-mix(in oklch, var(--border) 55%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 70%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--border) 35%, transparent),
-      0 8px 16px -12px color-mix(in oklch, var(--border) 40%, transparent);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
     transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
   }
 
   .auth-input:focus-visible {
     transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 75%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, var(--border) 40%, transparent),
-      0 10px 22px -14px color-mix(in oklch, var(--border) 45%, transparent);
+    box-shadow: var(--shadow-m);
   }
 
   .dark .auth-input {
-    background: color-mix(in oklch, var(--card) 70%, black 30%);
-    border-color: color-mix(in oklch, var(--border) 70%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 18%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
-      0 12px 24px -16px color-mix(in oklch, black 65%, transparent);
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: var(--shadow-s);
   }
 
   .dark .auth-input:focus-visible {
-    transform: translateY(-1px);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 25%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, black 60%, transparent),
-      0 16px 26px -18px color-mix(in oklch, black 70%, transparent);
-  }  :root .quick-action-button {
-  box-shadow:
-    0 8px 18px -12px color-mix(in srgb, var(--border) 35%, transparent),
-    0 2px 4px -2px color-mix(in srgb, var(--border) 20%, transparent);
+    box-shadow: var(--shadow-m);
   }
 
-  :root .quick-action-button::before {
-    border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); /* darker ridge */
-    border-bottom: 1px solid color-mix(in srgb, white 65%, transparent);     /* lighter underside */
+  :root .quick-action-button {
+    box-shadow: var(--shadow-s);
   }
 
-  /* Optional: keep the current look in dark mode */
   .dark .quick-action-button {
     box-shadow: var(--shadow-s);
   }
-  .dark .quick-action-button::before {
-    border-top: 1px solid color-mix(in srgb, white 55%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
-  }
 
   :root .recent-app-card {
-  background: color-mix(in oklch,
-    var(--background) 80%,      /* base page tone */
-    var(--muted) white 20%            /* slightly deeper neutral */
-  );
-  --card-border-top: color-mix(in oklch, var(--border) 70%, transparent);
-  --card-border-bottom: color-mix(in oklch, white 70%, transparent);
-  box-shadow:
-    inset 0 2px 6px color-mix(in oklch, var(--border) 55%, transparent),
-    inset 0 -3px 10px color-mix(in oklch, white 75%, transparent);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
   }
 
-  /* optional: keep the dark-theme look untouched */
   .dark .recent-app-card {
-    background: var(--card);
-    --card-border-top: oklch(0.40 0.01 260);
-    --card-border-bottom: oklch(0.18 0.01 260);
+    background: rgba(17, 24, 39, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
     box-shadow: var(--shadow-s);
   }
 
   :root .recent-app-item {
-  background: var(--card); /* or a new token to match your raised cards */
-  border-color: color-mix(in oklch, var(--border) 65%, transparent);
-  box-shadow:
-    0 8px 18px -14px color-mix(in oklch, var(--border) 40%, transparent),
-    0 4px 8px -6px color-mix(in oklch, black 12%, transparent),
-    inset 0 1px 0 color-mix(in oklch, white 60%, transparent);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
   }
 
   :root .recent-app-item:hover {
-    box-shadow:
-      0 12px 28px -18px color-mix(in oklch, var(--border) 40%, transparent),
-      0 6px 12px -8px color-mix(in oklch, black 16%, transparent),
-      inset 0 1px 0 color-mix(in oklch, white 70%, transparent);
+    box-shadow: var(--shadow-m);
   }
 
   .profile-tabs [data-slot="tabs-trigger"] {
-  background: transparent;
-  border: 1px solid transparent;
-  transform: translateY(0);
-  transition:
-    transform 200ms ease,
-    background 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    color 200ms ease;
+    background: transparent;
+    border: 1px solid transparent;
+    transform: translateY(0);
+    transition: transform 200ms ease, background 200ms ease, border-color 200ms ease, box-shadow 200ms ease, color 200ms ease;
   }
 
   :root .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
-  transform: translateY(-2px);
-  background: color-mix(in oklch, var(--background) 55%, white 45%);
-  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 72%, transparent),
-    inset 0 -1px 0 color-mix(in oklch, var(--border) 48%, transparent),
-    0 10px 22px -14px color-mix(in oklch, var(--border) 50%, transparent),
-    0 5px 12px -8px color-mix(in oklch, black 18%, transparent);
+    transform: translateY(-2px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
   }
 
   .dark .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
     transform: translateY(-2px);
-    background: color-mix(in oklch, var(--card) 55%, black 45%);
-    border: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklch, white 28%, transparent),
-      inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
-      0 14px 28px -16px color-mix(in oklch, black 70%, transparent),
-      0 6px 16px -10px color-mix(in oklch, var(--highlight) 38%, transparent);
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    box-shadow: var(--shadow-s);
     color: var(--primary-foreground);
   }
-
 
   .card-surface {
     position: relative;
     background: var(--card);
     border-radius: inherit;
-    border: 1px solid color-mix(in srgb, white 14%, var(--card));
-    box-shadow:
-      0 12px 24px -16px color-mix(in srgb, black 65%, transparent),
-      0 6px 12px -18px color-mix(in srgb, black 35%, transparent);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-s);
     transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
   }
 
@@ -392,16 +312,14 @@
 
   .card-surface:hover {
     transform: translateY(-2px);
-    box-shadow:
-      0 18px 36px -18px color-mix(in srgb, black 70%, transparent),
-      0 12px 20px -20px color-mix(in srgb, black 40%, transparent);
+    box-shadow: var(--shadow-m);
   }
 
   .button-surface {
     position: relative;
     background: var(--control-surface);
     border-radius: inherit;
-    border: 1px solid color-mix(in srgb, white 22%, var(--control-surface));
+    border: 1px solid rgba(15, 23, 42, 0.08);
     box-shadow: var(--shadow-s);
     transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
   }
@@ -411,14 +329,378 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    border-top: 1px solid color-mix(in srgb, white 55%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.15);
     pointer-events: none;
   }
 
   .button-surface:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-m);
+  }
+}
+
+@supports (color: oklch(0.65 0.08 260)) {
+  :root:not([data-color-mode="basic"]) {
+    --radius: 0.5rem;
+  
+    --primary: oklch(0.65 0.08 260);
+    --primary-foreground: oklch(0.12 0.02 260);
+  
+    --secondary: oklch(0.4 0.1 80);
+    --secondary-foreground: oklch(0.98 0.02 260);
+  
+    --accent: oklch(0.9 0.02 260);
+    --accent-foreground: oklch(0.26 0.02 260);
+  
+    --button-elevated: oklch(0.94 0.01 260);
+  
+    --success: oklch(0.5 0.05 160);
+    --success-foreground: oklch(0.98 0.02 260);
+  
+    --warning: oklch(0.5 0.05 100);
+    --warning-foreground: oklch(0.2 0.03 80);
+  
+    --destructive: oklch(0.5 0.05 30);
+    --destructive-foreground: oklch(0.98 0.02 260);
+  
+    --info: oklch(0.5 0.05 260);
+    --info-foreground: oklch(0.98 0.02 260);
+  
+    --background: oklch(0.96 0.01 260);
+    --foreground: oklch(0.15 0.02 260);
+  
+    --card: oklch(1 0.01 260);
+    --card-foreground: oklch(0.15 0.02 260);
+  
+    --popover: oklch(1 0.01 260);
+    --popover-foreground: oklch(0.15 0.02 260);
+  
+    --muted: oklch(0.92 0.01 260);
+    --muted-foreground: oklch(0.4 0.02 260);
+  
+    --highlight: oklch(1 0.02 260);
+    --control-surface: oklch(0.98 0.01 260);
+    --border: oklch(0.6 0.02 260);
+    --border-muted: oklch(0.7 0.02 260);
+    --card-border-top: oklch(0.82 0.01 260);
+    --card-border-bottom: oklch(0.99 0.008 260);
+    --card-border-sides: oklch(0.9 0.01 260);
+    --input: oklch(0.85 0.02 260);
+    --ring: oklch(0.65 0.08 260);
+  
+    --sidebar: oklch(0.94 0.01 260);
+    --sidebar-foreground: oklch(0.18 0.02 260);
+    --sidebar-primary: oklch(0.4 0.1 260);
+    --sidebar-primary-foreground: oklch(0.98 0.02 260);
+    --sidebar-accent: oklch(0.92 0.01 260);
+    --sidebar-accent-foreground: oklch(0.24 0.02 260);
+    --sidebar-border: oklch(0.68 0.02 260);
+    --sidebar-ring: oklch(0.4 0.1 260);
+  
+    --status-saved: oklch(0.92 0.01 260);
+    --status-applied: oklch(0.4 0.1 260);
+    --status-interviewing: oklch(0.5 0.05 100);
+    --status-offer: oklch(0.5 0.05 160);
+    --status-rejected: oklch(0.5 0.05 30);
+    --status-accepted: oklch(0.4 0.1 80);
+  
+    --match-high: oklch(0.5 0.05 160);
+    --match-medium: oklch(0.5 0.05 100);
+    --match-low: oklch(0.5 0.05 30);
+  
+    --shadow-base: oklch(0.45 0.02 260);
+  
+    --shadow-s: inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
+      0 1px 2px color-mix(in srgb, black 8%, transparent),
+      0 3px 6px color-mix(in srgb, black 5%, transparent);
+    --shadow-m: inset 0 1px 0 color-mix(in srgb, white 75%, transparent),
+      0 3px 6px color-mix(in srgb, black 12%, transparent),
+      0 8px 16px color-mix(in srgb, black 8%, transparent);
+    --shadow-l: inset 0 1px 0 color-mix(in srgb, white 80%, transparent),
+      0 6px 10px color-mix(in srgb, black 16%, transparent),
+      0 16px 32px color-mix(in srgb, black 10%, transparent);
+  }
+  
+  /* ===== Dark Mode ===== */
+  .dark:not([data-color-mode="basic"]) {
+    --primary: oklch(1 0 0);
+    --primary-foreground: oklch(0.10 0.01 260);
+  
+    --secondary: oklch(0.74 0.10 80);
+    --secondary-foreground: oklch(0.10 0.01 260);
+  
+    --accent: oklch(0.48 0.02 260);
+    --accent-foreground: oklch(0.96 0.02 260);
+  
+    --button-elevated: oklch(0.34 0.012 260);
+  
+    --success: oklch(0.66 0.05 160);
+    --warning: oklch(0.66 0.05 100);
+    --destructive: oklch(0.66 0.05 30);
+    --info: oklch(0.66 0.05 260);
+  
+    --background: oklch(0.10 0.01 260);
+    --foreground: oklch(0.96 0.02 260);
+  
+    --card: oklch(0.26 0.01 260);
+    --card-foreground: oklch(0.96 0.02 260);
+  
+    --popover: oklch(0.12 0.01 260);
+    --popover-foreground: oklch(0.96 0.02 260);
+  
+    --muted: oklch(0.18 0.012 260);
+    --muted-foreground: oklch(0.76 0.02 260);
+  
+    --highlight: oklch(0.40 0.01 260);
+    --control-surface: oklch(0.42 0.01 260);
+    --card-border-top: oklch(0.40 0.01 260);
+    --card-border-bottom: oklch(0.18 0.01 260);
+    --border: oklch(0.18 0.01 260);
+    --border-muted: oklch(0.22 0.015 260);
+    --input: oklch(0.28 0.02 260);
+    --ring: oklch(0.85 0 0);
+  
+    --sidebar: oklch(0.12 0.01 260);
+    --sidebar-foreground: oklch(0.96 0.02 260);
+    --sidebar-primary: oklch(0.72 0.10 260);
+    --sidebar-primary-foreground: oklch(0.10 0.01 260);
+    --sidebar-accent: oklch(0.18 0.015 260);
+    --sidebar-accent-foreground: oklch(0.96 0.02 260);
+    --sidebar-border: oklch(0.22 0.015 260);
+    --sidebar-ring: oklch(0.72 0.10 260);
+  
+    --status-saved: oklch(0.36 0.02 260);
+    --status-applied: oklch(0.72 0.10 260);
+    --status-interviewing: oklch(0.66 0.05 100);
+    --status-offer: oklch(0.66 0.05 160);
+    --status-rejected: oklch(0.66 0.05 30);
+    --status-accepted: oklch(0.74 0.10 80);
+  
+    --match-high: oklch(0.66 0.05 160);
+    --match-medium: oklch(0.66 0.05 100);
+    --match-low: oklch(0.66 0.05 30);
+  
+    --shadow-base: oklch(0.06 0.003 260);
+  
+    --shadow-s: inset 0 1px 2px color-mix(in oklch, var(--highlight) 65%, transparent),
+      0 1px 2px color-mix(in oklch, oklch(0.05 0.003 260) 70%, transparent),
+      0 2px 4px color-mix(in oklch, oklch(0.08 0.003 260) 40%, transparent);
+    --shadow-m: inset 0 1px 2px color-mix(in oklch, var(--highlight) 75%, transparent),
+      0 2px 4px color-mix(in oklch, oklch(0.05 0.003 260) 75%, transparent),
+      0 4px 8px color-mix(in oklch, oklch(0.10 0.003 260) 40%, transparent);
+    --shadow-l: inset 0 1px 2px color-mix(in oklch, var(--highlight) 85%, transparent),
+      0 4px 6px color-mix(in oklch, oklch(0.05 0.003 260) 80%, transparent),
+      0 6px 12px color-mix(in oklch, oklch(0.12 0.003 260) 40%, transparent);
+  }
+  
+  
+  /* ===== Component Enhancements ===== */
+  @layer components {
+    :root:not([data-color-mode="basic"]) .sidebar-active {
+    background: color-mix(in oklch, var(--background) 15%, white 85%);
+    color: var(--foreground);
+    border-top: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+    border-left: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+    border-right: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+    border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 65%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--border) 45%, transparent),
+      0 10px 20px -12px color-mix(in oklch, var(--border) 55%, transparent),
+      0 4px 8px -6px color-mix(in oklch, black 18%, transparent);
+    }
+  
+    .dark:not([data-color-mode="basic"]) .sidebar-active {
+      background: color-mix(in oklch, var(--background) 30%, white 10%);
+      color: var(--primary-foreground);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 45%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, black 30%, transparent),
+        0 10px 18px -12px color-mix(in oklch, black 60%, transparent);
+    }
+  
+    .auth-input {
+      background: color-mix(in oklch, white 92%, var(--background) 8%);
+      border-color: color-mix(in oklch, var(--border) 55%, transparent);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 70%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, var(--border) 35%, transparent),
+        0 8px 16px -12px color-mix(in oklch, var(--border) 40%, transparent);
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+  
+    .auth-input:focus-visible {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 75%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, var(--border) 40%, transparent),
+        0 10px 22px -14px color-mix(in oklch, var(--border) 45%, transparent);
+    }
+  
+    .dark:not([data-color-mode="basic"]) .auth-input {
+      background: color-mix(in oklch, var(--card) 70%, black 30%);
+      border-color: color-mix(in oklch, var(--border) 70%, transparent);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 18%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
+        0 12px 24px -16px color-mix(in oklch, black 65%, transparent);
+    }
+  
+    .dark:not([data-color-mode="basic"]) .auth-input:focus-visible {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 25%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, black 60%, transparent),
+        0 16px 26px -18px color-mix(in oklch, black 70%, transparent);
+    }  :root:not([data-color-mode="basic"]) .quick-action-button {
+    box-shadow:
+      0 8px 18px -12px color-mix(in srgb, var(--border) 35%, transparent),
+      0 2px 4px -2px color-mix(in srgb, var(--border) 20%, transparent);
+    }
+  
+    :root:not([data-color-mode="basic"]) .quick-action-button::before {
+      border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); /* darker ridge */
+      border-bottom: 1px solid color-mix(in srgb, white 65%, transparent);     /* lighter underside */
+    }
+  
+    /* Optional: keep the current look in dark mode */
+    .dark:not([data-color-mode="basic"]) .quick-action-button {
+      box-shadow: var(--shadow-s);
+    }
+    .dark:not([data-color-mode="basic"]) .quick-action-button::before {
+      border-top: 1px solid color-mix(in srgb, white 55%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
+    }
+  
+    :root:not([data-color-mode="basic"]) .recent-app-card {
+    background: color-mix(in oklch,
+      var(--background) 80%,      /* base page tone */
+      var(--muted) white 20%            /* slightly deeper neutral */
+    );
+    --card-border-top: color-mix(in oklch, var(--border) 70%, transparent);
+    --card-border-bottom: color-mix(in oklch, white 70%, transparent);
+    box-shadow:
+      inset 0 2px 6px color-mix(in oklch, var(--border) 55%, transparent),
+      inset 0 -3px 10px color-mix(in oklch, white 75%, transparent);
+    }
+  
+    /* optional: keep the dark-theme look untouched */
+    .dark:not([data-color-mode="basic"]) .recent-app-card {
+      background: var(--card);
+      --card-border-top: oklch(0.40 0.01 260);
+      --card-border-bottom: oklch(0.18 0.01 260);
+      box-shadow: var(--shadow-s);
+    }
+  
+    :root:not([data-color-mode="basic"]) .recent-app-item {
+    background: var(--card); /* or a new token to match your raised cards */
+    border-color: color-mix(in oklch, var(--border) 65%, transparent);
+    box-shadow:
+      0 8px 18px -14px color-mix(in oklch, var(--border) 40%, transparent),
+      0 4px 8px -6px color-mix(in oklch, black 12%, transparent),
+      inset 0 1px 0 color-mix(in oklch, white 60%, transparent);
+    }
+  
+    :root:not([data-color-mode="basic"]) .recent-app-item:hover {
+      box-shadow:
+        0 12px 28px -18px color-mix(in oklch, var(--border) 40%, transparent),
+        0 6px 12px -8px color-mix(in oklch, black 16%, transparent),
+        inset 0 1px 0 color-mix(in oklch, white 70%, transparent);
+    }
+  
+    .profile-tabs [data-slot="tabs-trigger"] {
+    background: transparent;
+    border: 1px solid transparent;
+    transform: translateY(0);
+    transition:
+      transform 200ms ease,
+      background 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease,
+      color 200ms ease;
+    }
+  
+    :root:not([data-color-mode="basic"]) .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
+    transform: translateY(-2px);
+    background: color-mix(in oklch, var(--background) 55%, white 45%);
+    border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 72%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--border) 48%, transparent),
+      0 10px 22px -14px color-mix(in oklch, var(--border) 50%, transparent),
+      0 5px 12px -8px color-mix(in oklch, black 18%, transparent);
+    }
+  
+    .dark:not([data-color-mode="basic"]) .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
+      transform: translateY(-2px);
+      background: color-mix(in oklch, var(--card) 55%, black 45%);
+      border: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+      box-shadow:
+        inset 0 1px 0 color-mix(in oklch, white 28%, transparent),
+        inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
+        0 14px 28px -16px color-mix(in oklch, black 70%, transparent),
+        0 6px 16px -10px color-mix(in oklch, var(--highlight) 38%, transparent);
+      color: var(--primary-foreground);
+    }
+  
+  
+    .card-surface {
+      position: relative;
+      background: var(--card);
+      border-radius: inherit;
+      border: 1px solid color-mix(in srgb, white 14%, var(--card));
+      box-shadow:
+        0 12px 24px -16px color-mix(in srgb, black 65%, transparent),
+        0 6px 12px -18px color-mix(in srgb, black 35%, transparent);
+      transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
+    }
+  
+    .card-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border-top: 1px solid var(--card-border-top);
+      border-bottom: 1px solid var(--card-border-bottom);
+      pointer-events: none;
+    }
+  
+    .card-surface:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 18px 36px -18px color-mix(in srgb, black 70%, transparent),
+        0 12px 20px -20px color-mix(in srgb, black 40%, transparent);
+    }
+  
+    .button-surface {
+      position: relative;
+      background: var(--control-surface);
+      border-radius: inherit;
+      border: 1px solid color-mix(in srgb, white 22%, var(--control-surface));
+      box-shadow: var(--shadow-s);
+      transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+    }
+  
+    .button-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border-top: 1px solid color-mix(in srgb, white 55%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
+      pointer-events: none;
+    }
+  
+    .button-surface:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-m);
+    }
+  }
+  @layer base {
+    :root:not([data-color-mode="basic"]) ::selection {
+      background-color: color-mix(in oklch, var(--primary) 20%, transparent);
+    }
   }
 }
 
@@ -445,7 +727,7 @@
 
   /* Selection color */
   ::selection {
-    background-color: color-mix(in oklch, var(--primary) 20%, transparent);
+    background-color: rgba(99, 102, 241, 0.25); color: var(--foreground);
   }
 
   /* Headings */
@@ -554,6 +836,9 @@
     background-clip: text;
   }
 }
+
+
+
 
 
 

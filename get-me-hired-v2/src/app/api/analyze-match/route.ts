@@ -4,6 +4,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return fallback;
+};
+
 export async function POST(request: Request) {
   try {
     // Get the authorization header
@@ -79,8 +89,9 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Edge Function error:', error);
+      const errorMessage = getErrorMessage(error, 'Failed to analyze match');
       return NextResponse.json(
-        { error: error.message || 'Failed to analyze match' },
+        { error: errorMessage },
         { status: 500 }
       );
     }
@@ -98,11 +109,16 @@ export async function POST(request: Request) {
       data: data.data,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API route error:', error);
+    const message = getErrorMessage(error, 'Internal server error');
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message },
       { status: 500 }
     );
   }
 }
+
+
+
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { authHelpers } from "@/lib/auth";
 import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
@@ -45,8 +45,9 @@ export default function LoginPage() {
           router.push("/onboarding");
         }
       }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+    } catch (error: unknown) {
+      console.error('Login error:', error);
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
@@ -63,8 +64,9 @@ export default function LoginPage() {
         setIsLoading(false);
       }
       // OAuth will redirect automatically, no need to handle success here
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+    } catch (error: unknown) {
+      console.error('Google login error:', error);
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };
@@ -239,5 +241,6 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
 

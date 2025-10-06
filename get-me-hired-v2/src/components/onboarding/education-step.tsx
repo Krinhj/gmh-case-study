@@ -60,7 +60,7 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
     onUpdate(updated);
   };
 
-  const updateEducation = (id: string, field: keyof EducationEntry, value: any) => {
+  const updateEducation = <K extends keyof EducationEntry>(id: string, field: K, value: EducationEntry[K]) => {
     const updated = educationEntries.map((edu) =>
       edu.id === id ? { ...edu, [field]: value } : edu
     );
@@ -301,3 +301,4 @@ export function EducationStep({ data, onUpdate, onNext, onBack }: EducationStepP
     </form>
   );
 }
+

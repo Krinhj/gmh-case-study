@@ -259,9 +259,7 @@ const PrismaticBurst = ({
     gl.canvas.style.position = 'absolute';
     gl.canvas.style.inset = '0';
     gl.canvas.style.width = '100%';
-    gl.canvas.style.height = '100%';
-    gl.canvas.style.mixBlendMode = mixBlendMode && mixBlendMode !== 'none' ? mixBlendMode : '';
-    container.appendChild(gl.canvas);
+    gl.canvas.style.height = '100%';    container.appendChild(gl.canvas);
 
     const white = new Uint8Array([255, 255, 255, 255]);
     const gradientTex = new Texture(gl, {
@@ -361,7 +359,7 @@ const PrismaticBurst = ({
       const sm = mouseSmoothRef.current;
       sm[0] += (tgt[0] - sm[0]) * alpha;
       sm[1] += (tgt[1] - sm[1]) * alpha;
-      program.uniforms.uMouse.value = sm as any;
+      program.uniforms.uMouse.value = [...sm] as [number, number];
       program.uniforms.uTime.value = accumTime;
       renderer.render({ scene: meshRef.current! });
       raf = requestAnimationFrame(update);
@@ -462,3 +460,5 @@ const PrismaticBurst = ({
 };
 
 export default PrismaticBurst;
+
+
