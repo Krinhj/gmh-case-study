@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   Loader2,
   FileText,
@@ -494,12 +495,16 @@ export default function GeneratePage() {
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="container max-w-7xl py-8">
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">Generate Documents</h1>
-              <p className="text-muted-foreground mt-2">
-                Create AI-tailored resumes and cover letters for your job applications
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+              <div>
+                <h1 className="text-3xl font-bold">Generate Documents</h1>
+                <p className="text-muted-foreground mt-2">
+                  Create AI-tailored resumes and cover letters for your job applications
+                </p>
+              </div>
+              <ThemeToggle />
             </div>
+          </div>
 
         <Card>
           <CardHeader>
@@ -827,8 +832,15 @@ export default function GeneratePage() {
           </Card>
         )}
           </div>
-        </div>
       </main>
     </div>
   );
 }
+
+
+
+
+
+
+
+

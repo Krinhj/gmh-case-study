@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -100,7 +100,7 @@ export default function LoginPage() {
           {/* Logo & Branding - Centered */}
           <div className="flex flex-col items-center gap-4 mb-8">
             <Image
-              src="/getmehired.svg"
+              src="/getmehired-light.svg"
               alt="GetMeHired Logo"
               width={64}
               height={64}
@@ -135,7 +135,7 @@ export default function LoginPage() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="auth-input pl-10"
                     required
                   />
                 </div>
@@ -156,10 +156,10 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="auth-input pl-10 pr-10"
                     required
                   />
                   <button
@@ -239,3 +239,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+

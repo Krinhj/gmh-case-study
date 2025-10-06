@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RecentApplications } from "@/components/dashboard/recent-applications";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { DashboardProvider } from "@/contexts/dashboard-context";
 
 export default function DashboardPage() {
@@ -56,13 +57,14 @@ export default function DashboardPage() {
         >
           {/* Top Bar */}
           <div className="border-b bg-background sticky top-0 z-10">
-            <div className="flex items-center justify-between p-6">
+            <div className="flex items-center justify-between gap-4 p-6">
               <div>
                 <h1 className="text-3xl font-bold">Dashboard</h1>
                 <p className="text-muted-foreground mt-1">
                   Welcome back! Here's your application overview.
                 </p>
               </div>
+              <ThemeToggle />
             </div>
           </div>
 
@@ -82,5 +84,7 @@ export default function DashboardPage() {
     </DashboardProvider>
   );
 }
+
+
 
 

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -7,41 +7,43 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Map theme variables to Tailwind colors - must use hsl() wrapper */
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  /* Map theme variables to Tailwind colors via CSS variables */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-highlight: var(--highlight);
+  --color-border-muted: var(--border-muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   /* Success, Warning, Info */
-  --color-success: hsl(var(--success));
-  --color-warning: hsl(var(--warning));
-  --color-info: hsl(var(--info));
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
 
   /* Sidebar */
-  --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   /* Radius */
   --radius-sm: calc(var(--radius) - 4px);
@@ -66,118 +68,358 @@
 :root {
   --radius: 0.5rem;
 
-  /* ===== Brand Colors ===== */
-  /* Primary: Professional Blue-Purple gradient feel */
-  --primary: 217 91% 60%; /* #4F8EF7 - Brighter blue */
-  --primary-foreground: 0 0% 100%;
+  --primary: oklch(0.65 0.08 260);
+  --primary-foreground: oklch(0.12 0.02 260);
 
-  /* Secondary: Elegant Purple/Indigo */
-  --secondary: 263 70% 60%; /* #6366F1 - Indigo-500 */
-  --secondary-foreground: 0 0% 100%;
+  --secondary: oklch(0.4 0.1 80);
+  --secondary-foreground: oklch(0.98 0.02 260);
 
-  /* Accent: Vibrant Teal */
-  --accent: 189 94% 43%; /* #06B6D4 - Cyan-500 */
-  --accent-foreground: 0 0% 100%;
+  --accent: oklch(0.9 0.02 260);
+  --accent-foreground: oklch(0.26 0.02 260);
 
-  /* ===== Semantic Colors ===== */
-  --success: 142 76% 36%; /* #10B981 - Green-500 */
-  --success-foreground: 0 0% 100%;
+  --button-elevated: oklch(0.94 0.01 260);
 
-  --warning: 38 92% 50%; /* #F59E0B - Amber-500 */
-  --warning-foreground: 0 0% 0%;
+  --success: oklch(0.5 0.05 160);
+  --success-foreground: oklch(0.98 0.02 260);
 
-  --destructive: 0 84% 60%; /* #EF4444 - Red-500 */
-  --destructive-foreground: 0 0% 100%;
+  --warning: oklch(0.5 0.05 100);
+  --warning-foreground: oklch(0.2 0.03 80);
 
-  --info: 199 89% 48%; /* #0EA5E9 - Sky-500 */
-  --info-foreground: 0 0% 100%;
+  --destructive: oklch(0.5 0.05 30);
+  --destructive-foreground: oklch(0.98 0.02 260);
 
-  /* ===== Backgrounds ===== */
-  --background: 0 0% 100%; /* White */
-  --foreground: 222 47% 11%; /* #0F172A - Slate-900 */
+  --info: oklch(0.5 0.05 260);
+  --info-foreground: oklch(0.98 0.02 260);
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --background: oklch(0.96 0.01 260);
+  --foreground: oklch(0.15 0.02 260);
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --card: oklch(1 0.01 260);
+  --card-foreground: oklch(0.15 0.02 260);
 
-  --muted: 210 40% 96%; /* #F8FAFC - Slate-50 */
-  --muted-foreground: 215 16% 47%; /* #64748B - Slate-500 */
+  --popover: oklch(1 0.01 260);
+  --popover-foreground: oklch(0.15 0.02 260);
 
-  /* ===== Borders & Inputs ===== */
-  --border: 214 32% 91%; /* #E2E8F0 - Slate-200 */
-  --input: 214 32% 91%;
-  --ring: 217 91% 60%;
+  --muted: oklch(0.92 0.01 260);
+  --muted-foreground: oklch(0.4 0.02 260);
 
-  /* ===== Sidebar Colors ===== */
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 217 91% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-border: 214 32% 91%;
-  --sidebar-ring: 217 91% 60%;
+  --highlight: oklch(1 0.02 260);
+  --control-surface: oklch(0.98 0.01 260);
+  --border: oklch(0.6 0.02 260);
+  --border-muted: oklch(0.7 0.02 260);
+  --card-border-top: oklch(0.82 0.01 260);
+  --card-border-bottom: oklch(0.99 0.008 260);
+  --card-border-sides: oklch(0.9 0.01 260);
+  --input: oklch(0.85 0.02 260);
+  --ring: oklch(0.65 0.08 260);
 
-  /* ===== Status Colors ===== */
-  --status-saved: 215 20% 65%;
-  --status-applied: 217 91% 60%;
-  --status-interviewing: 38 92% 50%;
-  --status-offer: 142 76% 36%;
-  --status-rejected: 0 84% 60%;
-  --status-accepted: 263 70% 60%;
+  --sidebar: oklch(0.94 0.01 260);
+  --sidebar-foreground: oklch(0.18 0.02 260);
+  --sidebar-primary: oklch(0.4 0.1 260);
+  --sidebar-primary-foreground: oklch(0.98 0.02 260);
+  --sidebar-accent: oklch(0.92 0.01 260);
+  --sidebar-accent-foreground: oklch(0.24 0.02 260);
+  --sidebar-border: oklch(0.68 0.02 260);
+  --sidebar-ring: oklch(0.4 0.1 260);
 
-  /* ===== Match Score Colors ===== */
-  --match-high: 142 76% 36%;
-  --match-medium: 45 93% 47%;
-  --match-low: 0 84% 60%;
+  --status-saved: oklch(0.92 0.01 260);
+  --status-applied: oklch(0.4 0.1 260);
+  --status-interviewing: oklch(0.5 0.05 100);
+  --status-offer: oklch(0.5 0.05 160);
+  --status-rejected: oklch(0.5 0.05 30);
+  --status-accepted: oklch(0.4 0.1 80);
+
+  --match-high: oklch(0.5 0.05 160);
+  --match-medium: oklch(0.5 0.05 100);
+  --match-low: oklch(0.5 0.05 30);
+
+  --shadow-base: oklch(0.45 0.02 260);
+
+  --shadow-s: inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
+    0 1px 2px color-mix(in srgb, black 8%, transparent),
+    0 3px 6px color-mix(in srgb, black 5%, transparent);
+  --shadow-m: inset 0 1px 0 color-mix(in srgb, white 75%, transparent),
+    0 3px 6px color-mix(in srgb, black 12%, transparent),
+    0 8px 16px color-mix(in srgb, black 8%, transparent);
+  --shadow-l: inset 0 1px 0 color-mix(in srgb, white 80%, transparent),
+    0 6px 10px color-mix(in srgb, black 16%, transparent),
+    0 16px 32px color-mix(in srgb, black 10%, transparent);
 }
 
 /* ===== Dark Mode ===== */
 .dark {
-  --primary: 217 91% 65%; /* Lighter for dark bg */
-  --primary-foreground: 222 47% 11%;
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0.10 0.01 260);
 
-  --secondary: 263 70% 65%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: oklch(0.74 0.10 80);
+  --secondary-foreground: oklch(0.10 0.01 260);
 
-  --accent: 189 94% 43%;
-  --accent-foreground: 0 0% 100%;
+  --accent: oklch(0.48 0.02 260);
+  --accent-foreground: oklch(0.96 0.02 260);
 
-  /* Semantic colors stay vibrant in dark mode */
-  --success: 142 76% 40%;
-  --warning: 38 92% 55%;
-  --destructive: 0 84% 65%;
-  --info: 199 89% 52%;
+  --button-elevated: oklch(0.34 0.012 260);
 
-  /* Dark backgrounds */
-  --background: 222 47% 11%; /* #0F172A - Slate-900 */
-  --foreground: 210 40% 98%; /* #F8FAFC - Slate-50 */
+  --success: oklch(0.66 0.05 160);
+  --warning: oklch(0.66 0.05 100);
+  --destructive: oklch(0.66 0.05 30);
+  --info: oklch(0.66 0.05 260);
 
-  --card: 217 33% 17%; /* #1E293B - Slate-800 */
-  --card-foreground: 210 40% 98%;
+  --background: oklch(0.10 0.01 260);
+  --foreground: oklch(0.96 0.02 260);
 
-  --popover: 217 33% 17%;
-  --popover-foreground: 210 40% 98%;
+  --card: oklch(0.26 0.01 260);
+  --card-foreground: oklch(0.96 0.02 260);
 
-  --muted: 215 28% 17%; /* #1E293B - Slate-800 */
-  --muted-foreground: 215 20% 65%; /* #94A3B8 - Slate-400 */
+  --popover: oklch(0.12 0.01 260);
+  --popover-foreground: oklch(0.96 0.02 260);
 
-  /* Dark borders */
-  --border: 215 25% 27%; /* #334155 - Slate-700 */
-  --input: 215 25% 27%;
-  --ring: 217 91% 65%;
+  --muted: oklch(0.18 0.012 260);
+  --muted-foreground: oklch(0.76 0.02 260);
 
-  /* Dark sidebar */
-  --sidebar: 217 33% 17%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 217 91% 65%;
-  --sidebar-primary-foreground: 222 47% 11%;
-  --sidebar-accent: 215 28% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 215 25% 27%;
-  --sidebar-ring: 217 91% 65%;
+  --highlight: oklch(0.40 0.01 260);
+  --control-surface: oklch(0.42 0.01 260);
+  --card-border-top: oklch(0.40 0.01 260);
+  --card-border-bottom: oklch(0.18 0.01 260);
+  --border: oklch(0.18 0.01 260);
+  --border-muted: oklch(0.22 0.015 260);
+  --input: oklch(0.28 0.02 260);
+  --ring: oklch(0.85 0 0);
+
+  --sidebar: oklch(0.12 0.01 260);
+  --sidebar-foreground: oklch(0.96 0.02 260);
+  --sidebar-primary: oklch(0.72 0.10 260);
+  --sidebar-primary-foreground: oklch(0.10 0.01 260);
+  --sidebar-accent: oklch(0.18 0.015 260);
+  --sidebar-accent-foreground: oklch(0.96 0.02 260);
+  --sidebar-border: oklch(0.22 0.015 260);
+  --sidebar-ring: oklch(0.72 0.10 260);
+
+  --status-saved: oklch(0.36 0.02 260);
+  --status-applied: oklch(0.72 0.10 260);
+  --status-interviewing: oklch(0.66 0.05 100);
+  --status-offer: oklch(0.66 0.05 160);
+  --status-rejected: oklch(0.66 0.05 30);
+  --status-accepted: oklch(0.74 0.10 80);
+
+  --match-high: oklch(0.66 0.05 160);
+  --match-medium: oklch(0.66 0.05 100);
+  --match-low: oklch(0.66 0.05 30);
+
+  --shadow-base: oklch(0.06 0.003 260);
+
+  --shadow-s: inset 0 1px 2px color-mix(in oklch, var(--highlight) 65%, transparent),
+    0 1px 2px color-mix(in oklch, oklch(0.05 0.003 260) 70%, transparent),
+    0 2px 4px color-mix(in oklch, oklch(0.08 0.003 260) 40%, transparent);
+  --shadow-m: inset 0 1px 2px color-mix(in oklch, var(--highlight) 75%, transparent),
+    0 2px 4px color-mix(in oklch, oklch(0.05 0.003 260) 75%, transparent),
+    0 4px 8px color-mix(in oklch, oklch(0.10 0.003 260) 40%, transparent);
+  --shadow-l: inset 0 1px 2px color-mix(in oklch, var(--highlight) 85%, transparent),
+    0 4px 6px color-mix(in oklch, oklch(0.05 0.003 260) 80%, transparent),
+    0 6px 12px color-mix(in oklch, oklch(0.12 0.003 260) 40%, transparent);
+}
+
+
+/* ===== Component Enhancements ===== */
+@layer components {
+  :root .sidebar-active {
+  background: color-mix(in oklch, var(--background) 15%, white 85%);
+  color: var(--foreground);
+  border-top: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+  border-left: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+  border-right: 1px solid color-mix(in oklch, var(--border) 55%, transparent);
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 65%, transparent),
+    inset 0 -1px 0 color-mix(in oklch, var(--border) 45%, transparent),
+    0 10px 20px -12px color-mix(in oklch, var(--border) 55%, transparent),
+    0 4px 8px -6px color-mix(in oklch, black 18%, transparent);
+  }
+
+  .dark .sidebar-active {
+    background: color-mix(in oklch, var(--background) 30%, white 10%);
+    color: var(--primary-foreground);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 45%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, black 30%, transparent),
+      0 10px 18px -12px color-mix(in oklch, black 60%, transparent);
+  }
+
+  .auth-input {
+    background: color-mix(in oklch, white 92%, var(--background) 8%);
+    border-color: color-mix(in oklch, var(--border) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 70%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--border) 35%, transparent),
+      0 8px 16px -12px color-mix(in oklch, var(--border) 40%, transparent);
+    transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+  }
+
+  .auth-input:focus-visible {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 75%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, var(--border) 40%, transparent),
+      0 10px 22px -14px color-mix(in oklch, var(--border) 45%, transparent);
+  }
+
+  .dark .auth-input {
+    background: color-mix(in oklch, var(--card) 70%, black 30%);
+    border-color: color-mix(in oklch, var(--border) 70%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 18%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
+      0 12px 24px -16px color-mix(in oklch, black 65%, transparent);
+  }
+
+  .dark .auth-input:focus-visible {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 25%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, black 60%, transparent),
+      0 16px 26px -18px color-mix(in oklch, black 70%, transparent);
+  }  :root .quick-action-button {
+  box-shadow:
+    0 8px 18px -12px color-mix(in srgb, var(--border) 35%, transparent),
+    0 2px 4px -2px color-mix(in srgb, var(--border) 20%, transparent);
+  }
+
+  :root .quick-action-button::before {
+    border-top: 1px solid color-mix(in srgb, var(--border) 65%, transparent); /* darker ridge */
+    border-bottom: 1px solid color-mix(in srgb, white 65%, transparent);     /* lighter underside */
+  }
+
+  /* Optional: keep the current look in dark mode */
+  .dark .quick-action-button {
+    box-shadow: var(--shadow-s);
+  }
+  .dark .quick-action-button::before {
+    border-top: 1px solid color-mix(in srgb, white 55%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
+  }
+
+  :root .recent-app-card {
+  background: color-mix(in oklch,
+    var(--background) 80%,      /* base page tone */
+    var(--muted) white 20%            /* slightly deeper neutral */
+  );
+  --card-border-top: color-mix(in oklch, var(--border) 70%, transparent);
+  --card-border-bottom: color-mix(in oklch, white 70%, transparent);
+  box-shadow:
+    inset 0 2px 6px color-mix(in oklch, var(--border) 55%, transparent),
+    inset 0 -3px 10px color-mix(in oklch, white 75%, transparent);
+  }
+
+  /* optional: keep the dark-theme look untouched */
+  .dark .recent-app-card {
+    background: var(--card);
+    --card-border-top: oklch(0.40 0.01 260);
+    --card-border-bottom: oklch(0.18 0.01 260);
+    box-shadow: var(--shadow-s);
+  }
+
+  :root .recent-app-item {
+  background: var(--card); /* or a new token to match your raised cards */
+  border-color: color-mix(in oklch, var(--border) 65%, transparent);
+  box-shadow:
+    0 8px 18px -14px color-mix(in oklch, var(--border) 40%, transparent),
+    0 4px 8px -6px color-mix(in oklch, black 12%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 60%, transparent);
+  }
+
+  :root .recent-app-item:hover {
+    box-shadow:
+      0 12px 28px -18px color-mix(in oklch, var(--border) 40%, transparent),
+      0 6px 12px -8px color-mix(in oklch, black 16%, transparent),
+      inset 0 1px 0 color-mix(in oklch, white 70%, transparent);
+  }
+
+  .profile-tabs [data-slot="tabs-trigger"] {
+  background: transparent;
+  border: 1px solid transparent;
+  transform: translateY(0);
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    color 200ms ease;
+  }
+
+  :root .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
+  transform: translateY(-2px);
+  background: color-mix(in oklch, var(--background) 55%, white 45%);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 72%, transparent),
+    inset 0 -1px 0 color-mix(in oklch, var(--border) 48%, transparent),
+    0 10px 22px -14px color-mix(in oklch, var(--border) 50%, transparent),
+    0 5px 12px -8px color-mix(in oklch, black 18%, transparent);
+  }
+
+  .dark .profile-tabs [data-slot="tabs-trigger"][data-state="active"] {
+    transform: translateY(-2px);
+    background: color-mix(in oklch, var(--card) 55%, black 45%);
+    border: 1px solid color-mix(in oklch, var(--border) 75%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklch, white 28%, transparent),
+      inset 0 -1px 0 color-mix(in oklch, black 55%, transparent),
+      0 14px 28px -16px color-mix(in oklch, black 70%, transparent),
+      0 6px 16px -10px color-mix(in oklch, var(--highlight) 38%, transparent);
+    color: var(--primary-foreground);
+  }
+
+
+  .card-surface {
+    position: relative;
+    background: var(--card);
+    border-radius: inherit;
+    border: 1px solid color-mix(in srgb, white 14%, var(--card));
+    box-shadow:
+      0 12px 24px -16px color-mix(in srgb, black 65%, transparent),
+      0 6px 12px -18px color-mix(in srgb, black 35%, transparent);
+    transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
+  }
+
+  .card-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid var(--card-border-top);
+    border-bottom: 1px solid var(--card-border-bottom);
+    pointer-events: none;
+  }
+
+  .card-surface:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 36px -18px color-mix(in srgb, black 70%, transparent),
+      0 12px 20px -20px color-mix(in srgb, black 40%, transparent);
+  }
+
+  .button-surface {
+    position: relative;
+    background: var(--control-surface);
+    border-radius: inherit;
+    border: 1px solid color-mix(in srgb, white 22%, var(--control-surface));
+    box-shadow: var(--shadow-s);
+    transition: box-shadow 140ms ease, transform 140ms ease, border-color 140ms ease;
+  }
+
+  .button-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid color-mix(in srgb, white 55%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, black 30%, transparent);
+    pointer-events: none;
+  }
+
+  .button-surface:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-m);
+  }
 }
 
 /* ===== Base Styles ===== */
@@ -203,7 +445,7 @@
 
   /* Selection color */
   ::selection {
-    background-color: hsl(var(--primary) / 0.2);
+    background-color: color-mix(in oklch, var(--primary) 20%, transparent);
   }
 
   /* Headings */
@@ -248,6 +490,19 @@
 
 /* ===== Utility Classes ===== */
 @layer utilities {
+  .shadow-s {
+    box-shadow: var(--shadow-s);
+  }
+
+  .shadow-m {
+    box-shadow: var(--shadow-m);
+  }
+
+  .shadow-l {
+    box-shadow: var(--shadow-l);
+  }
+
+
   /* Container */
   .container {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
@@ -293,9 +548,22 @@
 
   /* Gradient text */
   .gradient-text {
-    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)));
+    background: linear-gradient(to right, var(--primary), var(--secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

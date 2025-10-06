@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -953,7 +954,7 @@ export default function ProfilePage() {
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="container max-w-5xl py-8">
           {/* Header */}
-          <div className="mb-6 flex items-start justify-between">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Profile</h1>
               <p className="text-muted-foreground mt-2">
@@ -961,6 +962,7 @@ export default function ProfilePage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               {contextLoading && (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               )}
@@ -975,7 +977,7 @@ export default function ProfilePage() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 w-full justify-start">
+            <TabsList className="profile-tabs mb-6 w-full justify-start">
               <TabsTrigger value="personal">
                 <User className="mr-2 h-4 w-4" />
                 Personal Info
@@ -1125,7 +1127,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        A 2-3 sentence overview that will appear on your résumé
+                        A 2-3 sentence overview that will appear on your rÃ©sumÃ©
                       </p>
                     </div>
                   </CardContent>
@@ -1251,7 +1253,7 @@ export default function ProfilePage() {
                                 </span>
                                 {exp.location && (
                                   <>
-                                    <span>•</span>
+                                    <span>â€¢</span>
                                     <span>{exp.location}</span>
                                   </>
                                 )}
@@ -1264,7 +1266,7 @@ export default function ProfilePage() {
                                   <ul className="text-sm space-y-1 list-disc list-inside">
                                     {exp.responsibilities.map((resp, idx) => {
                                       // Remove bullet if already present (smart detection)
-                                      const cleanedResp = resp.trim().startsWith('•')
+                                      const cleanedResp = resp.trim().startsWith('â€¢')
                                         ? resp.trim().substring(1).trim()
                                         : resp;
                                       return <li key={idx}>{cleanedResp}</li>;
@@ -1365,7 +1367,7 @@ export default function ProfilePage() {
                                 </span>
                                 {edu.gpa && (
                                   <>
-                                    <span>•</span>
+                                    <span>â€¢</span>
                                     <span>GPA: {edu.gpa}</span>
                                   </>
                                 )}
@@ -2550,3 +2552,6 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+
+

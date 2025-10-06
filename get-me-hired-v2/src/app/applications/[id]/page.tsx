@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
+import type { ApplicationFormData } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -28,24 +29,11 @@ import {
 } from "lucide-react";
 import { MatchInsightsDialog, type MatchInsights } from "@/components/applications/match-insights-dialog";
 
-type JobApplication = {
+type JobApplication = Omit<ApplicationFormData, "id"> & {
   id: string;
-  company: string;
-  role: string;
-  job_posting_url: string | null;
-  job_description: string | null;
-  status: "applied" | "interviewing" | "offer" | "rejected";
-  match_score: number | null;
-  match_insights: MatchInsights | null;
-  notes: string | null;
-  date_applied: string;
+  user_id: string;
   created_at: string;
-  location: string | null;
-  work_mode: "remote" | "onsite" | "hybrid" | null;
-  job_requirements: string | null;
-  job_responsibilities: string | null;
-  benefits: string | null;
-  industry: string | null;
+  updated_at: string | null;
 };
 
 const statusConfig = {
@@ -97,7 +85,7 @@ export default function ApplicationViewPage() {
 
         if (cached) {
           try {
-            const cachedApps = JSON.parse(cached);
+            const cachedApps = JSON.parse(cached) as JobApplication[];
             const cachedApp = cachedApps.find((app: JobApplication) => app.id === id);
 
             if (cachedApp) {
@@ -124,7 +112,7 @@ export default function ApplicationViewPage() {
           return;
         }
 
-        setApplication(data);
+        setApplication(data as JobApplication);
       } catch (error) {
         console.error("Error:", error);
         toast.error("An error occurred");
@@ -198,28 +186,42 @@ export default function ApplicationViewPage() {
     return { updatedApp: updatedApp as JobApplication, insights } as const;
   };
 
-  const handleSave = async (data: JobApplication) => {
+  const handleSave = async (data: ApplicationFormData) => {
     if (!userId || !application) return;
 
     try {
-      const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
-      void _matchScore;
-      void _matchInsights;
-      void _ignoredId;
+      const targetApplicationId = data.id ?? application.id;
+
+      const updatePayload = {
+        company: data.company,
+        role: data.role,
+        job_posting_url: data.job_posting_url?.trim() || null,
+        job_description: data.job_description ?? null,
+        status: data.status,
+        notes: data.notes?.trim() || null,
+        date_applied: data.date_applied,
+        location: data.location?.trim() || null,
+        work_mode: data.work_mode ?? null,
+        job_requirements: data.job_requirements?.trim() || null,
+        job_responsibilities: data.job_responsibilities?.trim() || null,
+        benefits: data.benefits?.trim() || null,
+        industry: data.industry?.trim() || null,
+      };
 
       const { data: updatedApp, error } = await supabase
         .from("job_applications")
-        .update(rest)
-        .eq("id", application.id)
+        .update(updatePayload)
+        .eq("id", targetApplicationId)
         .select()
         .single();
 
       if (error) throw error;
+      if (!updatedApp) throw new Error("Application update returned no data");
 
       let finalApp = updatedApp as JobApplication;
 
       try {
-        const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(updatedApp.id);
+        const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(targetApplicationId);
         finalApp = analyzedApp;
         toast.success(`Match score: ${insights.match_score}%`);
       } catch (analysisError) {
@@ -266,7 +268,7 @@ export default function ApplicationViewPage() {
       const cacheKey = `job_applications_${userId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
-        const cachedApps = JSON.parse(cached);
+        const cachedApps = JSON.parse(cached) as JobApplication[];
         const updatedApps = cachedApps.filter((app: JobApplication) => app.id !== application.id);
         localStorage.setItem(cacheKey, JSON.stringify(updatedApps));
       }

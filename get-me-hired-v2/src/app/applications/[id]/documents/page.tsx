@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import type { ElementType } from "react";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -251,7 +252,7 @@ export default function ApplicationDocumentsPage() {
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="container max-w-5xl py-8 space-y-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <Button
                 variant="ghost"
@@ -267,14 +268,16 @@ export default function ApplicationDocumentsPage() {
                 Saved resumes and cover letters created for {application.role} at {application.company}.
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild className="mt-1">
-              <Link href="/generate">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate New Document
-              </Link>
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/generate">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate New Document
+                </Link>
+              </Button>
+            </div>
           </div>
-
           {renderDocumentSection(
             "Resumes",
             "AI-tailored resumes you've generated for this application.",
@@ -295,3 +298,6 @@ export default function ApplicationDocumentsPage() {
     </div>
   );
 }
+
+
+

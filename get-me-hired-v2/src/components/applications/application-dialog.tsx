@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from "lucide-react";
 import type { MatchInsights } from "@/components/applications/match-insights-dialog";
 
-type JobApplication = {
+export type ApplicationFormData = {
   id?: string;
   company: string;
   role: string;
@@ -32,8 +32,8 @@ type JobApplication = {
 type ApplicationDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: JobApplication) => Promise<void>;
-  application?: JobApplication | null;
+  onSave: (data: ApplicationFormData) => Promise<void>;
+  application?: ApplicationFormData | null;
   mode: "add" | "edit";
 };
 
@@ -45,11 +45,11 @@ export function ApplicationDialog({
   mode,
 }: ApplicationDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<JobApplication>({
+  const [formData, setFormData] = useState<ApplicationFormData>({
     company: "",
     role: "",
     job_posting_url: null,
-    job_description: null,
+    job_description: "",
     status: "applied",
     match_score: null,
     match_insights: null,
@@ -82,7 +82,7 @@ export function ApplicationDialog({
         company: "",
         role: "",
         job_posting_url: null,
-        job_description: null,
+        job_description: "",
         status: "applied",
         match_score: null,
         match_insights: null,
@@ -98,12 +98,22 @@ export function ApplicationDialog({
     }
   }, [application, mode, open]);
 
+  const isSaveDisabled =
+    isLoading ||
+    !formData.company.trim() ||
+    !formData.role.trim() ||
+    !formData.date_applied ||
+    !formData.job_description?.trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await onSave(formData);
+      await onSave({
+        ...formData,
+        job_description: formData.job_description?.trim() ?? "",
+      });
       onOpenChange(false);
     } catch (error) {
       console.error("Error saving application:", error);
@@ -112,7 +122,7 @@ export function ApplicationDialog({
     }
   };
 
-  const updateField = (field: keyof JobApplication, value: any) => {
+  const updateField = (field: keyof ApplicationFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -245,15 +255,16 @@ export function ApplicationDialog({
             <Label htmlFor="job_description">
               Job Description
               <span className="text-xs text-muted-foreground ml-2">
-                💡 Paste full job posting for AI match analysis
+                Paste full job posting for AI match analysis
               </span>
             </Label>
             <Textarea
               id="job_description"
               placeholder="Paste the job description here..."
-              value={formData.job_description || ""}
-              onChange={(e) => updateField("job_description", e.target.value || null)}
+              value={formData.job_description ?? ""}
+              onChange={(e) => updateField("job_description", e.target.value)}
               className="min-h-[100px]"
+              required
             />
           </div>
 
@@ -314,7 +325,7 @@ export function ApplicationDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isSaveDisabled}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -332,3 +343,14 @@ export function ApplicationDialog({
     </Dialog>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
