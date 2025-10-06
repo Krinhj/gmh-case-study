@@ -14,7 +14,7 @@ export function ThemedPrismaticBurst({
   darkColors = ['#4d3dff', '#ff007a', '#00d4ff'], // Vibrant Blue, Pink, Cyan (for dark mode)
   ...props
 }: ThemedPrismaticBurstProps) {
-  const { theme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Wait for theme to mount to avoid hydration mismatch
@@ -42,3 +42,4 @@ export function ThemedPrismaticBurst({
     />
   );
 }
+

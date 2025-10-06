@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -122,7 +122,7 @@ export function ApplicationDialog({
     }
   };
 
-  const updateField = (field: keyof ApplicationFormData, value: any) => {
+  const updateField = <K extends keyof ApplicationFormData>(field: K, value: ApplicationFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -172,7 +172,7 @@ export function ApplicationDialog({
               <Label htmlFor="status">Status *</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => updateField("status", value)}
+                onValueChange={(value) => updateField("status", value as ApplicationFormData["status"])}
               >
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Select status" />
@@ -226,7 +226,7 @@ export function ApplicationDialog({
               <Label htmlFor="work_mode">Work Mode</Label>
               <Select
                 value={formData.work_mode || ""}
-                onValueChange={(value) => updateField("work_mode", value || null)}
+                onValueChange={(value) => updateField("work_mode", (value || null) as ApplicationFormData["work_mode"])}
               >
                 <SelectTrigger id="work_mode">
                   <SelectValue placeholder="Select mode" />
@@ -343,6 +343,9 @@ export function ApplicationDialog({
     </Dialog>
   );
 }
+
+
+
 
 
 

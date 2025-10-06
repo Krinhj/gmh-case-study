@@ -62,7 +62,7 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
     onUpdate(updated);
   };
 
-  const updateProject = (id: string, field: keyof ProjectEntry, value: any) => {
+  const updateProject = <K extends keyof ProjectEntry>(id: string, field: K, value: ProjectEntry[K]) => {
     const updated = projects.map((proj) =>
       proj.id === id ? { ...proj, [field]: value } : proj
     );
@@ -326,3 +326,4 @@ export function ProjectsStep({ data, onUpdate, onNext, onBack }: ProjectsStepPro
     </form>
   );
 }
+

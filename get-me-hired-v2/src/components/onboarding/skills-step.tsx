@@ -68,16 +68,6 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
     onComplete();
   };
 
-  const getCategoryIcon = (category: string) => {
-    const cat = SKILL_CATEGORIES.find((c) => c.value === category);
-    const Icon = cat?.icon || Code;
-    return <Icon className="h-3 w-3" />;
-  };
-
-  const getCategoryLabel = (category: string) => {
-    return SKILL_CATEGORIES.find((c) => c.value === category)?.label || category;
-  };
-
   const skillsByCategory = SKILL_CATEGORIES.map((category) => ({
     ...category,
     skills: skills.filter((s) => s.category === category.value),
@@ -88,7 +78,7 @@ export function SkillsStep({ data, onUpdate, onBack, onComplete, isLoading }: Sk
       <div className="space-y-2">
         <h2 className="text-2xl font-bold">Skills</h2>
         <p className="text-muted-foreground">
-          Add your technical skills, soft skills, languages, and tools you're proficient in.
+          Add your technical skills, soft skills, languages, and tools you&apos;re proficient in.
         </p>
       </div>
 

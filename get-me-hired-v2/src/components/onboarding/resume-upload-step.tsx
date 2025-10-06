@@ -4,11 +4,28 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import type { ParsedResumeData } from "@/app/onboarding/page";
 import { supabase } from "@/lib/supabase";
 import { ResumeParsingLoader } from "@/components/ui/resume-parsing-loader";
 
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return fallback;
+};
+
+type ResumeParseResponse = {
+  success: boolean;
+  data: ParsedResumeData;
+  error?: string;
+};
+
 interface ResumeUploadStepProps {
-  onResumeDataLoaded: (parsedData: any) => void;
+  onResumeDataLoaded: (parsedData: ParsedResumeData) => void;
   onSkip: () => void;
 }
 
@@ -96,7 +113,7 @@ export function ResumeUploadStep({
 
       setParsingStage("parsing");
 
-      const { data, error } = await supabase.functions.invoke('parse-resume', {
+      const { data, error } = await supabase.functions.invoke<ResumeParseResponse>('parse-resume', {
         body: {
           file_url: filePath,
           user_id: user.id,
@@ -121,9 +138,10 @@ export function ResumeUploadStep({
       // Pass parsed data to parent
       onResumeDataLoaded(data.data);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Resume upload error:", error);
-      toast.error(error.message || "Failed to parse resume");
+      const message = getErrorMessage(error, "Failed to parse resume");
+      toast.error(message);
       setParsing(false);
       setUploading(false);
     }
@@ -138,7 +156,7 @@ export function ResumeUploadStep({
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-semibold">Quick Start with Your Resume</h2>
             <p className="text-muted-foreground">
-              Upload your resume and we'll auto-fill your profile with AI
+              Upload your resume and we&apos;ll auto-fill your profile with AI
             </p>
           </div>
 

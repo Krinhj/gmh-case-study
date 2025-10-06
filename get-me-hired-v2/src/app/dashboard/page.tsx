@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -61,7 +61,7 @@ export default function DashboardPage() {
               <div>
                 <h1 className="text-3xl font-bold">Dashboard</h1>
                 <p className="text-muted-foreground mt-1">
-                  Welcome back! Here's your application overview.
+                  Welcome back! Here&apos;s your application overview.
                 </p>
               </div>
               <ThemeToggle />
@@ -84,6 +84,7 @@ export default function DashboardPage() {
     </DashboardProvider>
   );
 }
+
 
 
 

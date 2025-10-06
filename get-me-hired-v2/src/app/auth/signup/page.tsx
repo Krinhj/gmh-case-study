@@ -1,19 +1,17 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { authHelpers } from "@/lib/auth";
 import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,7 +40,7 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      const { data, error: authError } = await authHelpers.signUp(email, password, "");
+      const { error: authError } = await authHelpers.signUp(email, password, "");
 
       if (authError) {
         setError(authError.message || "Failed to create account");
@@ -53,7 +51,8 @@ export default function SignUpPage() {
       // Show success message (email confirmation required)
       setSuccess(true);
       setIsLoading(false);
-    } catch (err) {
+    } catch (error: unknown) {
+      console.error("Sign up error:", error);      
       setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
@@ -71,7 +70,8 @@ export default function SignUpPage() {
         setIsLoading(false);
       }
       // OAuth will redirect automatically
-    } catch (err) {
+    } catch (error: unknown) {
+      console.error("Google sign up error:", error);
       setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
@@ -122,7 +122,7 @@ export default function SignUpPage() {
             <div className="text-center space-y-1.5 mb-6">
               <CardTitle className="text-xl font-bold">Create an account</CardTitle>
               <CardDescription className="text-sm">
-                Enter your information to get started with AI-powered résumés
+                Enter your information to get started with AI-powered r�sum�s
               </CardDescription>
             </div>
           )}
@@ -138,7 +138,7 @@ export default function SignUpPage() {
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl font-bold">Check your email</h2>
                   <p className="text-muted-foreground">
-                    We've sent a confirmation link to
+                    We&apos;ve sent a confirmation link to
                   </p>
                   <p className="font-medium text-foreground">{email}</p>
                 </div>
@@ -159,7 +159,7 @@ export default function SignUpPage() {
               {/* Additional Info */}
               <div className="text-center space-y-4">
                 <p className="text-xs text-muted-foreground">
-                  Didn't receive the email? Check your spam folder or{" "}
+                  Didn&apos;t receive the email? Check your spam folder or{" "}
                   <button
                     className="text-primary hover:underline font-medium"
                     onClick={() => setSuccess(false)}
@@ -337,5 +337,7 @@ export default function SignUpPage() {
     </div>
   );
 }
+
+
 
 

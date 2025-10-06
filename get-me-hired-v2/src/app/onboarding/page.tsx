@@ -8,7 +8,6 @@ import Image from "next/image";
 import { authHelpers } from "@/lib/auth";
 import { saveOnboardingData } from "@/lib/onboarding";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 
 // Import step components (we'll create these next)
 import { PersonalInfoStep } from "@/components/onboarding/personal-info-step";
@@ -79,6 +78,63 @@ export type OnboardingData = {
   }>;
 };
 
+type ParsedResumePersonalInfo = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  professional_summary?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+};
+
+type ParsedResumeExperience = {
+  company?: string;
+  role?: string;
+  start_date?: string;
+  end_date?: string;
+  responsibilities?: string[];
+  achievements?: string[];
+  location?: string;
+  technologies?: string[];
+};
+
+type ParsedResumeEducation = {
+  institution?: string;
+  degree?: string;
+  field_of_study?: string;
+  start_date?: string;
+  end_date?: string;
+  gpa?: string;
+  relevant_coursework?: string[];
+  achievements?: string[];
+  activities?: string[];
+};
+
+type ParsedResumeProject = {
+  name?: string;
+  description?: string;
+  project_url?: string;
+  technologies?: string[];
+  key_features?: string[];
+  achievements?: string[];
+  role_responsibilities?: string[];
+};
+
+type ParsedResumeSkill = {
+  name?: string;
+  category?: string;
+};
+
+export type ParsedResumeData = {
+  personal_info?: ParsedResumePersonalInfo;
+  experience?: ParsedResumeExperience[];
+  education?: ParsedResumeEducation[];
+  projects?: ParsedResumeProject[];
+  skills?: ParsedResumeSkill[];
+};
+
 const STEPS = [
   { id: 0, title: "Resume Upload", description: "Quick start with your resume (optional)" },
   { id: 1, title: "Personal Info", description: "Tell us about yourself" },
@@ -130,7 +186,7 @@ export default function OnboardingPage() {
     setCurrentStep(1); // Skip to Personal Info
   };
 
-  const handleResumeDataLoaded = (parsedData: any) => {
+  const handleResumeDataLoaded = (parsedData: ParsedResumeData) => {
     // Helper function to convert text to title case
     const toTitleCase = (text: string) => {
       return text
@@ -186,7 +242,7 @@ export default function OnboardingPage() {
         github: parsedData.personal_info?.github || "",
         portfolio: parsedData.personal_info?.portfolio || "",
       },
-      experience: parsedData.experience?.map((exp: any) => {
+      experience: parsedData.experience?.map((exp) => {
         // Merge responsibilities and achievements
         const responsibilities = exp.responsibilities || [];
         const achievements = exp.achievements || [];
@@ -209,7 +265,7 @@ export default function OnboardingPage() {
           skills: exp.technologies || [],
         };
       }) || [],
-      education: parsedData.education?.map((edu: any) => ({
+      education: parsedData.education?.map((edu) => ({
         id: crypto.randomUUID(),
         institution: edu.institution || "",
         degree: edu.degree || "",
@@ -222,7 +278,7 @@ export default function OnboardingPage() {
         achievements: edu.achievements || [],
         activities: edu.activities || [],
       })) || [],
-      projects: parsedData.projects?.map((proj: any) => ({
+      projects: parsedData.projects?.map((proj) => ({
         id: crypto.randomUUID(),
         name: proj.name || "",
         description: proj.description || "",
@@ -236,7 +292,7 @@ export default function OnboardingPage() {
         achievements: proj.achievements || [],
         roleResponsibilities: proj.role_responsibilities || [],
       })) || [],
-      skills: parsedData.skills?.map((skill: any) => {
+      skills: parsedData.skills?.map((skill) => {
         // Map any invalid categories to valid ones
         let category = skill.category || "technical";
         const validCategories = ["technical", "soft", "language", "tool"];
@@ -286,7 +342,7 @@ export default function OnboardingPage() {
 
       // Redirect to dashboard
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving onboarding data:", error);
       toast.error("An unexpected error occurred");
       setIsLoading(false);
@@ -442,3 +498,5 @@ export default function OnboardingPage() {
     </div>
   );
 }
+
+

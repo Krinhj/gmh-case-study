@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -123,6 +123,12 @@ type Skill = {
   name: string;
   category: string;
 };
+type EditingItem =
+  | { type: 'experience'; data: ExperienceEntry }
+  | { type: 'education'; data: EducationEntry }
+  | { type: 'project'; data: Project }
+  | { type: 'skill'; data: Skill }
+  | null;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -160,8 +166,12 @@ export default function ProfilePage() {
   const [showEducationDialog, setShowEducationDialog] = useState(false);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showSkillDialog, setShowSkillDialog] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
-
+  const [editingItem, setEditingItem] = useState<EditingItem>(null);
+  const editingExperience = editingItem?.type === 'experience' ? editingItem.data : null;
+  const editingEducation = editingItem?.type === 'education' ? editingItem.data : null;
+  const editingProject = editingItem?.type === 'project' ? editingItem.data : null;
+  const editingSkill = editingItem?.type === 'skill' ? editingItem.data : null;
+  
   // Delete confirmation states
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; type: 'experience' | 'education' | 'project' | 'skill' } | null>(null);
@@ -247,7 +257,7 @@ export default function ProfilePage() {
           loadProjects(user.id),
           loadSkills(user.id),
         ]);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Auth error:", error);
         router.push("/auth/login");
       }
@@ -406,7 +416,7 @@ export default function ProfilePage() {
       toast.success("Profile updated successfully!");
       updateProfileData(profileData);
       setIsEditMode(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving profile:", error);
       toast.error("An error occurred while saving");
     } finally {
@@ -451,7 +461,7 @@ export default function ProfilePage() {
   };
 
   const handleEditExperience = (exp: ExperienceEntry) => {
-    setEditingItem(exp);
+    setEditingItem({ type: 'experience', data: exp });
     setNewExperience(exp);
     setTempResponsibility("");
     setTempAchievement("");
@@ -475,12 +485,12 @@ export default function ProfilePage() {
         is_current: newExperience.is_current,
       };
 
-      if (editingItem?.id) {
+      if (editingExperience?.id) {
         // Update
         const { error } = await supabase
           .from("work_experience")
           .update(experienceData)
-          .eq("id", editingItem.id);
+          .eq("id", editingExperience.id);
 
         if (error) throw error;
         toast.success("Experience updated successfully!");
@@ -512,7 +522,7 @@ export default function ProfilePage() {
       setTempResponsibility("");
       setTempAchievement("");
       setTempTechnology("");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving experience:", error);
       toast.error("Failed to save experience");
     }
@@ -563,30 +573,12 @@ export default function ProfilePage() {
       }
 
       if (error) throw error;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error deleting ${itemToDelete.type}:`, error);
       toast.error(`Failed to delete ${itemToDelete.type}`);
     } finally {
       setDeleteConfirmOpen(false);
       setItemToDelete(null);
-    }
-  };
-
-  const handleDeleteExperience = async (id: string) => {
-    if (!userId) return;
-
-    try {
-      const { error } = await supabase
-        .from("work_experience")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Experience deleted successfully!");
-      await loadExperiences(userId);
-    } catch (error) {
-      console.error("Error deleting experience:", error);
-      toast.error("Failed to delete experience");
     }
   };
 
@@ -631,7 +623,7 @@ export default function ProfilePage() {
   };
 
   const handleEditEducation = (edu: EducationEntry) => {
-    setEditingItem(edu);
+    setEditingItem({ type: 'education', data: edu });
     setNewEducation(edu);
     setTempCoursework("");
     setTempEduAchievement("");
@@ -655,11 +647,11 @@ export default function ProfilePage() {
         gpa: newEducation.gpa || null,
       };
 
-      if (editingItem?.id) {
+      if (editingEducation?.id) {
         const { error } = await supabase
           .from("education")
           .update(educationData)
-          .eq("id", editingItem.id);
+          .eq("id", editingEducation.id);
 
         if (error) throw error;
         toast.success("Education updated successfully!");
@@ -691,27 +683,9 @@ export default function ProfilePage() {
       setTempCoursework("");
       setTempEduAchievement("");
       setTempActivity("");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving education:", error);
       toast.error("Failed to save education");
-    }
-  };
-
-  const handleDeleteEducation = async (id: string) => {
-    if (!userId) return;
-
-    try {
-      const { error } = await supabase
-        .from("education")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Education deleted successfully!");
-      await loadEducation(userId);
-    } catch (error) {
-      console.error("Error deleting education:", error);
-      toast.error("Failed to delete education");
     }
   };
 
@@ -758,7 +732,7 @@ export default function ProfilePage() {
   };
 
   const handleEditProject = (proj: Project) => {
-    setEditingItem(proj);
+    setEditingItem({ type: 'project', data: proj });
     setNewProject(proj);
     setTempProjectTech("");
     setTempKeyFeature("");
@@ -783,11 +757,11 @@ export default function ProfilePage() {
         end_date: newProject.end_date || null,
       };
 
-      if (editingItem?.id) {
+      if (editingProject?.id) {
         const { error } = await supabase
           .from("projects")
           .update(projectData)
-          .eq("id", editingItem.id);
+          .eq("id", editingProject.id);
 
         if (error) throw error;
         toast.success("Project updated successfully!");
@@ -820,27 +794,9 @@ export default function ProfilePage() {
       setTempKeyFeature("");
       setTempProjectAchievement("");
       setTempRoleResp("");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving project:", error);
       toast.error("Failed to save project");
-    }
-  };
-
-  const handleDeleteProject = async (id: string) => {
-    if (!userId) return;
-
-    try {
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Project deleted successfully!");
-      await loadProjects(userId);
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      toast.error("Failed to delete project");
     }
   };
 
@@ -876,7 +832,7 @@ export default function ProfilePage() {
   };
 
   const handleEditSkill = (skill: Skill) => {
-    setEditingItem(skill);
+    setEditingItem({ type: 'skill', data: skill });
     setNewSkill(skill);
     setShowSkillDialog(true);
   };
@@ -885,14 +841,14 @@ export default function ProfilePage() {
     if (!userId) return;
 
     try {
-      if (editingItem?.id) {
+      if (editingSkill?.id) {
         const { error } = await supabase
           .from("skills")
           .update({
             name: newSkill.name,
             category: newSkill.category,
           })
-          .eq("id", editingItem.id);
+          .eq("id", editingSkill.id);
 
         if (error) throw error;
         toast.success("Skill updated successfully!");
@@ -909,36 +865,19 @@ export default function ProfilePage() {
 
       await loadSkills(userId);
       setShowSkillDialog(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving skill (raw):", error);
       console.error("Error saving skill (stringified):", JSON.stringify(error, null, 2));
       if (error && typeof error === 'object') {
+        const partial = error as Partial<Record<'message' | 'code' | 'details' | 'hint', unknown>>;
         console.error('Error properties:', {
-          message: (error as any).message,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint,
+          message: typeof partial.message === 'string' ? partial.message : undefined,
+          code: typeof partial.code === 'string' ? partial.code : undefined,
+          details: typeof partial.details === 'string' ? partial.details : undefined,
+          hint: typeof partial.hint === 'string' ? partial.hint : undefined,
         });
       }
       toast.error("Failed to save skill");
-    }
-  };
-
-  const handleDeleteSkill = async (id: string) => {
-    if (!userId) return;
-
-    try {
-      const { error } = await supabase
-        .from("skills")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      toast.success("Skill deleted successfully!");
-      await loadSkills(userId);
-    } catch (error) {
-      console.error("Error deleting skill:", error);
-      toast.error("Failed to delete skill");
     }
   };
 
@@ -1127,7 +1066,7 @@ export default function ProfilePage() {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        A 2-3 sentence overview that will appear on your rÃ©sumÃ©
+                        A 2-3 sentence overview that will appear on your résumé
                       </p>
                     </div>
                   </CardContent>
@@ -1253,7 +1192,7 @@ export default function ProfilePage() {
                                 </span>
                                 {exp.location && (
                                   <>
-                                    <span>â€¢</span>
+                                    <span>•</span>
                                     <span>{exp.location}</span>
                                   </>
                                 )}
@@ -1266,7 +1205,7 @@ export default function ProfilePage() {
                                   <ul className="text-sm space-y-1 list-disc list-inside">
                                     {exp.responsibilities.map((resp, idx) => {
                                       // Remove bullet if already present (smart detection)
-                                      const cleanedResp = resp.trim().startsWith('â€¢')
+                                      const cleanedResp = resp.trim().startsWith('•')
                                         ? resp.trim().substring(1).trim()
                                         : resp;
                                       return <li key={idx}>{cleanedResp}</li>;
@@ -1367,7 +1306,7 @@ export default function ProfilePage() {
                                 </span>
                                 {edu.gpa && (
                                   <>
-                                    <span>â€¢</span>
+                                    <span>•</span>
                                     <span>GPA: {edu.gpa}</span>
                                   </>
                                 )}
@@ -1644,7 +1583,7 @@ export default function ProfilePage() {
       <Dialog open={showExperienceDialog} onOpenChange={setShowExperienceDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Experience" : "Add Experience"}</DialogTitle>
+            <DialogTitle>{editingExperience ? "Edit Experience" : "Add Experience"}</DialogTitle>
             <DialogDescription>
               Add details about your work experience
             </DialogDescription>
@@ -1895,7 +1834,7 @@ export default function ProfilePage() {
               Cancel
             </Button>
             <Button onClick={handleSaveExperience}>
-              {editingItem ? "Update" : "Add"} Experience
+              {editingExperience ? "Update" : "Add"} Experience
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1905,7 +1844,7 @@ export default function ProfilePage() {
       <Dialog open={showEducationDialog} onOpenChange={setShowEducationDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Education" : "Add Education"}</DialogTitle>
+            <DialogTitle>{editingEducation ? "Edit Education" : "Add Education"}</DialogTitle>
             <DialogDescription>
               Add details about your educational background
             </DialogDescription>
@@ -1928,7 +1867,7 @@ export default function ProfilePage() {
                   id="edu-degree"
                   value={newEducation.degree}
                   onChange={(e) => setNewEducation({ ...newEducation, degree: e.target.value })}
-                  placeholder="Bachelor's, Master's, etc."
+                  placeholder="Bachelor&apos;s, Master&apos;s, etc."
                 />
               </div>
               <div className="space-y-2">
@@ -2152,7 +2091,7 @@ export default function ProfilePage() {
               Cancel
             </Button>
             <Button onClick={handleSaveEducation}>
-              {editingItem ? "Update" : "Add"} Education
+              {editingEducation ? "Update" : "Add"} Education
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2162,7 +2101,7 @@ export default function ProfilePage() {
       <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Project" : "Add Project"}</DialogTitle>
+            <DialogTitle>{editingProject ? "Edit Project" : "Add Project"}</DialogTitle>
             <DialogDescription>
               Add details about your project including technologies, features, and achievements
             </DialogDescription>
@@ -2465,7 +2404,7 @@ export default function ProfilePage() {
               Cancel
             </Button>
             <Button onClick={handleSaveProject}>
-              {editingItem ? "Update" : "Add"} Project
+              {editingProject ? "Update" : "Add"} Project
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2475,7 +2414,7 @@ export default function ProfilePage() {
       <Dialog open={showSkillDialog} onOpenChange={setShowSkillDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Skill" : "Add Skill"}</DialogTitle>
+            <DialogTitle>{editingSkill ? "Edit Skill" : "Add Skill"}</DialogTitle>
             <DialogDescription>
               Add a skill to your profile
             </DialogDescription>
@@ -2514,7 +2453,7 @@ export default function ProfilePage() {
               Cancel
             </Button>
             <Button onClick={handleSaveSkill}>
-              {editingItem ? "Update" : "Add"} Skill
+              {editingSkill ? "Update" : "Add"} Skill
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2552,6 +2491,13 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 

@@ -55,7 +55,7 @@ export default function ConfirmEmailPage() {
 
             {/* Next Steps */}
             <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium text-foreground">What's next?</p>
+              <p className="text-sm font-medium text-foreground">What&apos;s next?</p>
               <p className="text-sm text-muted-foreground">
                 Click the button below to log in and start creating AI-powered résumés tailored to your dream jobs.
               </p>
@@ -74,3 +74,4 @@ export default function ConfirmEmailPage() {
     </div>
   );
 }
+
