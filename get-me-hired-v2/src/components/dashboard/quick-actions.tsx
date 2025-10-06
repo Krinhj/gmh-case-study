@@ -11,7 +11,7 @@ export function QuickActions() {
         <CardDescription>Common tasks to get you started</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
-        <Button className="h-auto flex-col gap-2 py-6" variant="outline" asChild>
+        <Button className="quick-action-button h-auto flex-col gap-2 py-6" variant="surface" asChild>
           <Link href="/applications">
             <Plus className="h-6 w-6" />
             <span className="font-semibold">Add Application</span>
@@ -19,7 +19,7 @@ export function QuickActions() {
           </Link>
         </Button>
 
-        <Button className="h-auto flex-col gap-2 py-6" variant="outline" asChild>
+        <Button className="quick-action-button h-auto flex-col gap-2 py-6" variant="surface" asChild>
           <Link href="/generate">
             <Sparkles className="h-6 w-6" />
             <span className="font-semibold">Generate Documents</span>

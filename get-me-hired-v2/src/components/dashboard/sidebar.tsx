@@ -1,13 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Briefcase, Sparkles, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,7 +26,10 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const logoSrc = resolvedTheme === "light" ? "/getmehired-dark.svg" : "/getmehired-light.svg";
 
   const handleLogoutClick = () => {
     setLogoutConfirmOpen(true);
@@ -52,7 +57,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer w-full"
         >
           <Image
-            src="/getmehired.svg"
+            src={logoSrc}
             alt="GetMeHired Logo"
             width={40}
             height={40}
@@ -67,20 +72,31 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
+          const linkClasses = cn(
+            "group flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+            isActive
+              ? "sidebar-active text-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            isCollapsed && "justify-center"
+          );
+          const iconClasses = cn(
+            "h-5 w-5 flex-shrink-0 transition-colors",
+            isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+          );
+          const labelClasses = cn(
+            "font-medium transition-colors",
+            isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+          );
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
-              } ${isCollapsed ? "justify-center" : ""}`}
+              className={linkClasses}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              <Icon className={iconClasses} />
+              {!isCollapsed && <span className={labelClasses}>{item.label}</span>}
             </Link>
           );
         })}
@@ -115,3 +131,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     </aside>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { FileText } from "lucide-react";
+﻿import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -9,9 +9,14 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <FileText className="h-5 w-5" />
-              </div>
+              <Image
+                src="/getmehired-light.svg"
+                alt="GetMeHired"
+                width={40}
+                height={40}
+                className="h-10 w-10"
+                priority
+              />
               <span className="text-lg font-bold">GetMeHired</span>
             </Link>
             <p className="text-sm text-muted-foreground">
@@ -78,7 +83,7 @@ export function Footer() {
               </Link>
             </p>
             <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} GetMeHired. All rights reserved.
+              Â© {new Date().getFullYear()} GetMeHired. All rights reserved.
             </p>
           </div>
         </div>
@@ -86,3 +91,4 @@ export function Footer() {
     </footer>
   );
 }
+

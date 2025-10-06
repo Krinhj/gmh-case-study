@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "GetMeHired",
   description: "GetMeHired - Your gateway to job opportunities",
   icons: {
-    icon: "/getmehired.svg",
+    icon: "/getmehired-light.svg",
   },
 };
 
@@ -48,3 +48,6 @@ export default function RootLayout({
     </html>
   );
 }
+
+
+

@@ -361,7 +361,7 @@ export default function OnboardingPage() {
         {/* Logo & Header */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <Image
-            src="/getmehired.svg"
+            src="/getmehired-light.svg"
             alt="GetMeHired Logo"
             width={64}
             height={64}

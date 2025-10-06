@@ -10,7 +10,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Image
-              src="/getmehired.svg"
+              src="/getmehired-light.svg"
               alt="GetMeHired Logo"
               width={32}
               height={32}

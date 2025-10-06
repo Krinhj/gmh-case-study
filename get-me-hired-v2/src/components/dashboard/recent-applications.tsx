@@ -22,7 +22,7 @@ export function RecentApplications() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="recent-app-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -52,7 +52,7 @@ export function RecentApplications() {
   }
 
   return (
-    <Card>
+    <Card className="recent-app-card">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -80,7 +80,7 @@ export function RecentApplications() {
             {recentApplications.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="recent-app-item flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3">

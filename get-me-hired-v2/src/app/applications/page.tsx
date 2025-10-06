@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
+import type { ApplicationFormData } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import type { MatchInsights } from "@/components/applications/match-insights-dialog";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -26,24 +28,11 @@ import {
   RefreshCw
 } from "lucide-react";
 
-type JobApplication = {
+type JobApplication = Omit<ApplicationFormData, "id"> & {
   id: string;
-  company: string;
-  role: string;
-  job_posting_url: string | null;
-  job_description: string | null;
-  status: "applied" | "interviewing" | "offer" | "rejected";
-  match_score: number | null;
-  match_insights: MatchInsights | null;
-  notes: string | null;
-  date_applied: string;
+  user_id: string;
   created_at: string;
-  location: string | null;
-  work_mode: "remote" | "onsite" | "hybrid" | null;
-  job_requirements: string | null;
-  job_responsibilities: string | null;
-  benefits: string | null;
-  industry: string | null;
+  updated_at: string | null;
 };
 
 const statusConfig = {
@@ -97,7 +86,7 @@ export default function ApplicationsPage() {
 
         if (cached) {
           try {
-            const cachedData = JSON.parse(cached);
+            const cachedData = JSON.parse(cached) as JobApplication[];
             setApplications(cachedData);
             setFilteredApplications(cachedData);
             setIsLoading(false);
@@ -120,9 +109,10 @@ export default function ApplicationsPage() {
         }
 
         // Update state and cache
-        setApplications(data || []);
-        setFilteredApplications(data || []);
-        localStorage.setItem(cacheKey, JSON.stringify(data || []));
+        const typedData = (data ?? []) as JobApplication[];
+        setApplications(typedData);
+        setFilteredApplications(typedData);
+        localStorage.setItem(cacheKey, JSON.stringify(typedData));
       } catch (error) {
         console.error("Error:", error);
         toast.error("An error occurred");
@@ -215,25 +205,43 @@ export default function ApplicationsPage() {
     return { updatedApp: updatedApp as JobApplication, insights } as const;
   };
 
-  const handleSave = async (data: JobApplication) => {
+  const buildUpdatePayload = (form: ApplicationFormData) => ({
+    company: form.company,
+    role: form.role,
+    job_posting_url: form.job_posting_url?.trim() || null,
+    job_description: form.job_description ?? null,
+    status: form.status,
+    notes: form.notes?.trim() || null,
+    date_applied: form.date_applied,
+    location: form.location?.trim() || null,
+    work_mode: form.work_mode ?? null,
+    job_requirements: form.job_requirements?.trim() || null,
+    job_responsibilities: form.job_responsibilities?.trim() || null,
+    benefits: form.benefits?.trim() || null,
+    industry: form.industry?.trim() || null,
+  });
+
+  const handleSave = async (data: ApplicationFormData) => {
     if (!userId) return;
 
     const cacheKey = `job_applications_${userId}`;
 
     try {
       if (dialogMode === "add") {
-        const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
-        void _matchScore;
-        void _matchInsights;
-        void _ignoredId;
+        const insertPayload = {
+          ...buildUpdatePayload(data),
+          match_score: data.match_score ?? null,
+          match_insights: data.match_insights ?? null,
+        };
 
         const { data: newApp, error } = await supabase
           .from("job_applications")
-          .insert([{ ...rest, user_id: userId }])
+          .insert([{ ...insertPayload, user_id: userId }])
           .select()
           .single();
 
         if (error) throw error;
+        if (!newApp) throw new Error("Application insert returned no data");
 
         let finalApp = newApp as JobApplication;
 
@@ -253,24 +261,22 @@ export default function ApplicationsPage() {
       } else {
         if (!editingApplication) return;
 
-        const { match_score: _matchScore, match_insights: _matchInsights, id: _ignoredId, ...rest } = data;
-        void _matchScore;
-        void _matchInsights;
-        void _ignoredId;
+        const updatePayload = buildUpdatePayload(data);
 
         const { data: updatedApp, error } = await supabase
           .from("job_applications")
-          .update(rest)
+          .update(updatePayload)
           .eq("id", editingApplication.id)
           .select()
           .single();
 
         if (error) throw error;
+        if (!updatedApp) throw new Error("Application update returned no data");
 
         let finalApp = updatedApp as JobApplication;
 
         try {
-          const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(updatedApp.id);
+          const { updatedApp: analyzedApp, insights } = await analyzeAndStoreMatch(editingApplication.id);
           finalApp = analyzedApp;
           toast.success(`Match score: ${insights.match_score}%`);
         } catch (analysisError) {
@@ -365,7 +371,7 @@ export default function ApplicationsPage() {
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="container max-w-7xl py-8">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Briefcase className="h-8 w-8" />
@@ -375,12 +381,14 @@ export default function ApplicationsPage() {
                 Track and manage your job applications
               </p>
             </div>
-            <Button size="lg" onClick={handleAddNew} className="cursor-pointer">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Application
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Button size="lg" onClick={handleAddNew} className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Application
+              </Button>
+            </div>
           </div>
-
           {/* Filters */}
           <div className="mb-6 flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -534,7 +542,7 @@ export default function ApplicationsPage() {
                     {/* Actions */}
                     <div className="flex items-center gap-2 pt-2 border-t">
                       <Button
-                        variant="outline"
+                        variant="surface"
                         size="sm"
                         className="flex-1"
                         asChild
@@ -544,15 +552,17 @@ export default function ApplicationsPage() {
                         </Link>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="surface"
                         size="sm"
+                       
                         onClick={() => handleEdit(application)}
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="surface"
                         size="sm"
+                       
                         onClick={() => handleDeleteClick(application.id)}
                       >
                         <Trash2 className="h-3 w-3 text-destructive" />
