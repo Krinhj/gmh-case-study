@@ -25,8 +25,10 @@ import {
   TrendingUp,
   Briefcase,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Menu
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type JobApplication = Omit<ApplicationFormData, "id"> & {
   id: string;
@@ -58,6 +60,7 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -367,35 +370,56 @@ export default function ApplicationsPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="container max-w-7xl py-8">
+      <Sidebar
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
+      />
+      <main
+        className={cn(
+          "flex-1 overflow-y-auto transition-all duration-300 ml-0 overflow-x-hidden",
+          isCollapsed ? "md:ml-20" : "md:ml-64"
+        )}
+      >
+        <div className="container max-w-7xl py-6 sm:py-8">
           {/* Header */}
-          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Briefcase className="h-8 w-8" />
-                Job Applications
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Track and manage your job applications
-              </p>
+          <div className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden mt-1"
+                aria-label="Open menu"
+                onClick={() => setIsMobileNavOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+                  <Briefcase className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
+                  Job Applications
+                </h1>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                  Track and manage your job applications
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <Button size="lg" onClick={handleAddNew} className="cursor-pointer">
+              <Button size="lg" className="lg:h-9 sm:size-auto cursor-pointer" onClick={handleAddNew}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Application
               </Button>
             </div>
           </div>
           {/* Filters */}
-          <div className="mb-6 flex items-center gap-3">
+          <div className="mb-6 flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Filter:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button
                 variant={filterStatus === "all" ? "default" : "outline"}
                 size="sm"
@@ -462,22 +486,22 @@ export default function ApplicationsPage() {
 
           {/* Applications Grid */}
           {!isLoading && filteredApplications.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
               {filteredApplications.map((application) => (
                 <Card key={application.id} className="hover:shadow-lg transition-shadow flex flex-col h-full">
                   <CardHeader className="flex-shrink-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-1 flex items-center gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base sm:text-lg mb-1 flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
                           {application.company}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground mb-1">
+                        <p className="text-sm text-muted-foreground mb-1 break-words">
                           {application.role}
                         </p>
                         {/* Location and Work Mode directly below Role - always reserve space */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-h-[20px]">
-                          {application.location && <span>{application.location}</span>}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground min-h-[20px] flex-wrap">
+                          {application.location && (<span className="truncate max-w-[10rem] sm:max-w-none">{application.location}</span>)}
                           {application.location && application.work_mode && <span>•</span>}
                           {application.work_mode && (
                             <span className="capitalize">{application.work_mode}</span>
@@ -596,6 +620,18 @@ export default function ApplicationsPage() {
           variant="destructive"
         />
       </main>
+      {/* Mobile overlay */}
+      {isMobileNavOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setIsMobileNavOpen(false)}
+          aria-hidden
+        />
+      )}
     </div>
   );
 }
+
+
+
+
