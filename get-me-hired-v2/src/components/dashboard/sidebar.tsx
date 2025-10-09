@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, Sparkles, User, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, Sparkles, User, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
@@ -21,9 +21,11 @@ const navItems = [
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
+export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -44,14 +46,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     setIsCollapsed(!isCollapsed);
   };
 
+  const baseClasses = "fixed left-0 top-0 h-screen border-r bg-card flex flex-col transition-transform duration-300 z-40";
+  const transformClasses = isMobileOpen ? "translate-x-0" : "-translate-x-full";
+  const widthClasses = isCollapsed ? "md:w-20" : "md:w-64";
+
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen border-r bg-card flex flex-col transition-all duration-300 ${
-        isCollapsed ? "w-20" : "w-64"
-      }`}
-    >
+    <aside className={`${baseClasses} w-64 md:translate-x-0 ${transformClasses} ${widthClasses}`}>
       {/* Logo */}
-      <div className="p-6 border-b">
+      <div className="p-6 border-b relative">
         <button
           onClick={toggleSidebar}
           className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer w-full"
@@ -65,6 +67,16 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           />
           {!isCollapsed && <span className="text-xl font-bold">GetMeHired</span>}
         </button>
+        {/* Close button for mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2 md:hidden"
+          onClick={onMobileClose}
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Navigation */}

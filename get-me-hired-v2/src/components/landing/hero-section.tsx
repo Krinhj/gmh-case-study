@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { ThemedPrismaticBurst } from "@/components/ui/themed-prismatic-burst";
 
 export function HeroSection() {
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setIsMobile(mq.matches);
+    const updateRm = () => setPrefersReducedMotion(rm.matches);
+    update(); updateRm();
+    mq.addEventListener?.("change", update);
+    rm.addEventListener?.("change", updateRm);
+    return () => {
+      mq.removeEventListener?.("change", update);
+      rm.removeEventListener?.("change", updateRm);
+    };
+  }, []);
   const scrollToTryOut = () => {
     document.getElementById("try-out")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -14,21 +31,21 @@ export function HeroSection() {
   return (
     <section className="relative min-h-screen overflow-hidden pt-20">
       {/* Animated Background - Full width */}
-      <div className="absolute inset-0 left-0 right-0 w-screen -z-10">
+      <div className="absolute inset-0 -z-10">
         <ThemedPrismaticBurst
-          animationType="rotate3d"
-          intensity={1.8}
-          speed={0.3}
-          distort={1.2}
-          rayCount={24}
-          mixBlendMode="lighten"
-          lightColors={['#60a5fa', '#a78bfa', '#22d3ee']} // Light blue, light purple, light cyan
-          darkColors={['#4d3dff', '#ff007a', '#00d4ff']} // Vibrant blue, pink, cyan
+          animationType={isMobile ? "rotate" : "rotate3d"}
+          intensity={prefersReducedMotion ? 0.8 : (isMobile ? 1.0 : 1.8)}
+          speed={prefersReducedMotion ? 0.15 : (isMobile ? 0.2 : 0.3)}
+          distort={prefersReducedMotion ? 0.6 : (isMobile ? 0.8 : 1.2)}
+          rayCount={isMobile ? 12 : 24}
+          mixBlendMode={isMobile ? "normal" : "lighten"}
+          lightColors={["#60a5fa", "#a78bfa", "#22d3ee"]}
+          darkColors={["#4d3dff", "#ff007a", "#00d4ff"]}
         />
       </div>
 
       {/* Content Container */}
-      <div className="container relative z-10 flex min-h-screen flex-col items-center justify-center gap-8 py-20 text-center -mt-16">
+      <div className="container relative z-10 flex min-h-screen flex-col items-center justify-center gap-6 sm:gap-8 py-12 sm:py-20 text-center -mt-16">
       {/* Badge */}
       <Badge variant="secondary" className="gap-2 px-4 py-2 text-sm">
         <Sparkles className="h-4 w-4" />
@@ -53,7 +70,7 @@ export function HeroSection() {
           Try It Now - No Signup Required
           <ArrowRight className="h-5 w-5" />
         </Button>
-        <Button size="lg" variant="outline" asChild>
+        <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
           <Link href="/auth/signup">Sign Up Free</Link>
         </Button>
       </div>
@@ -61,3 +78,6 @@ export function HeroSection() {
     </section>
   );
 }
+
+
+

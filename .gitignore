@@ -75,6 +75,7 @@ references/
 nul
 *.bak
 *.cache
+*.tmp.txt
 
 # Logs
 logs/

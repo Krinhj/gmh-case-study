@@ -24,12 +24,12 @@ export function RecentApplications() {
     return (
       <Card className="recent-app-card">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2 sm:items-center">
+            <div className="min-w-0">
               <CardTitle>Recent Applications</CardTitle>
               <CardDescription>Your latest job applications</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" className="shrink-0" asChild>
               <Link href="/applications">
                 View All
                 <ExternalLink className="ml-2 h-4 w-4" />
@@ -54,12 +54,12 @@ export function RecentApplications() {
   return (
     <Card className="recent-app-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-2 sm:items-center">
+          <div className="min-w-0">
             <CardTitle>Recent Applications</CardTitle>
             <CardDescription>Your latest job applications</CardDescription>
           </div>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" className="shrink-0" asChild>
             <Link href="/applications">
               View All
               <ExternalLink className="ml-2 h-4 w-4" />
@@ -80,16 +80,16 @@ export function RecentApplications() {
             {recentApplications.map((app) => (
               <div
                 key={app.id}
-                className="recent-app-item flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="recent-app-item flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <h3 className="font-semibold">{app.role}</h3>
+                    <h3 className="font-semibold leading-tight break-words">{app.role}</h3>
                     <Badge className={statusColors[app.status] || statusColors.applied} variant="secondary">
                       {app.status}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground flex-wrap">
                     <span>{app.company}</span>
                     {app.date_applied && (
                       <>
@@ -99,7 +99,7 @@ export function RecentApplications() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
                   <Button variant="ghost" size="sm" asChild>
                     <Link href={`/applications/${app.id}`}>View</Link>
                   </Button>

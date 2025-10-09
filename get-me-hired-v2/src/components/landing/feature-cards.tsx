@@ -27,7 +27,7 @@ const features = [
 
 export function FeatureCards() {
   return (
-    <section className="container py-20">
+    <section className="container py-12 sm:py-20">
       <div className="max-w-6xl mx-auto space-y-12">
         {/* Section Header */}
         <div className="text-center space-y-2">
@@ -40,7 +40,7 @@ export function FeatureCards() {
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature) => (
             <Card key={feature.title} className="border-2">
               <CardHeader>
@@ -61,3 +61,4 @@ export function FeatureCards() {
     </section>
   );
 }
+

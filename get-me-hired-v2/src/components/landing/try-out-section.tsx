@@ -17,7 +17,7 @@ export function TryOutSection() {
   };
 
   return (
-    <section id="try-out" className="container py-20">
+    <section id="try-out" className="container py-12 sm:py-20">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Section Header */}
         <div className="text-center space-y-2">
@@ -28,8 +28,8 @@ export function TryOutSection() {
         </div>
 
         {/* Two Column Layout */}
-        <Card className="p-8">
-          <div className="grid gap-8 lg:grid-cols-2">
+        <Card className="p-4 sm:p-6 lg:p-8">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
             {/* Left: Job Posting Input */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -39,7 +39,7 @@ export function TryOutSection() {
                 <Textarea
                   id="job-posting"
                   placeholder="Paste the job description here..."
-                  className="min-h-[300px] resize-none"
+                  className="min-h-[220px] sm:min-h-[300px] resize-none"
                   value={jobPosting}
                   onChange={(e) => setJobPosting(e.target.value)}
                 />
@@ -117,10 +117,10 @@ export function TryOutSection() {
           {/* Generate Button */}
           <div className="mt-8 flex justify-center">
             <Button
-              size="lg"
+              size="lg" className="w-full sm:w-auto gap-2"
               onClick={handleGenerate}
               disabled={!jobPosting.trim()}
-              className="gap-2"
+              
             >
               <Sparkles className="h-5 w-5" />
               Generate Sample Documents
@@ -131,3 +131,5 @@ export function TryOutSection() {
     </section>
   );
 }
+
+
