@@ -5,10 +5,10 @@ export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 place-items-center md:place-items-start text-center md:text-left">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 justify-center md:justify-start">
               <Image
                 src="/getmehired-light.svg"
                 alt="GetMeHired"
@@ -83,7 +83,7 @@ export function Footer() {
               </Link>
             </p>
             <p className="text-xs text-muted-foreground">
-              Â© {new Date().getFullYear()} GetMeHired. All rights reserved.
+              © {new Date().getFullYear()} GetMeHired. All rights reserved.
             </p>
           </div>
         </div>
