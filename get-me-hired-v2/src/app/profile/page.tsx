@@ -32,7 +32,8 @@ import {
   Award,
   Plus,
   Trash2,
-  Calendar
+  Calendar,
+  Menu
 } from "lucide-react";
 import { useProfile } from "@/contexts/profile-context";
 import {
@@ -135,6 +136,7 @@ export default function ProfilePage() {
   const { profileData: cachedProfile, isLoading: contextLoading, updateProfileData } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("personal");
@@ -888,35 +890,57 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="container max-w-5xl py-8">
-          {/* Header */}
-          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">Profile</h1>
-              <p className="text-muted-foreground mt-2">
-                Manage your personal information and professional details
-              </p>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
+      />
+      <main
+        className={`ml-0 flex-1 overflow-x-hidden transition-all duration-300 ${isCollapsed ? "md:ml-20" : "md:ml-64"}`}
+      >
+        <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-foreground"
+                onClick={() => setIsMobileNavOpen(true)}
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
-            <div className="flex items-center gap-3">
+            <h1 className="text-center text-2xl font-bold sm:text-3xl">Profile</h1>
+            <div className="flex items-center justify-end">
               <ThemeToggle />
-              {contextLoading && (
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              )}
-              {!isEditMode && activeTab === "personal" && (
-                <Button onClick={handleEdit} variant="outline" size="lg">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
-              )}
             </div>
           </div>
+        </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="profile-tabs mb-6 w-full justify-start">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground sm:text-base">
+                Manage your personal information and professional details
+              </p>
+              <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap sm:gap-3">
+                {contextLoading && (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                )}
+                {!isEditMode && activeTab === "personal" && (
+                  <Button onClick={handleEdit} variant="outline" className="w-full sm:w-auto">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+            </div>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="profile-tabs mb-6 w-full justify-start gap-2 overflow-x-auto flex-wrap md:flex-nowrap">
               <TabsTrigger value="personal">
                 <User className="mr-2 h-4 w-4" />
                 Personal Info
@@ -1577,8 +1601,15 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
       </main>
-
+      {isMobileNavOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setIsMobileNavOpen(false)}
+          aria-hidden
+        />
+      )}
       {/* Experience Dialog */}
       <Dialog open={showExperienceDialog} onOpenChange={setShowExperienceDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

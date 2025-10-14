@@ -69,9 +69,8 @@ export default function DashboardPage() {
         >
           {/* Top Bar */}
           <div className="border-b bg-background sticky top-0 z-10">
-            <div className="flex items-center justify-between gap-4 p-4 sm:p-6">
-              <div className="flex items-center gap-3">
-                {/* Mobile menu button */}
+            <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+              <div className="flex items-center">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -81,19 +80,19 @@ export default function DashboardPage() {
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-                  <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-                    Welcome back! Here&apos;s your application overview.
-                  </p>
-                </div>
               </div>
-              <ThemeToggle />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">Dashboard</h1>
+              <div className="flex items-center justify-end">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
 
           {/* Content */}
           <div className="p-4 sm:p-6 space-y-6">
+            <p className="text-center text-sm text-muted-foreground sm:text-left sm:text-base">
+              Welcome back! Here&apos;s your application overview.
+            </p>
             {/* Stats Cards */}
             <StatsCards />
 
