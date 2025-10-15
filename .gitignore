@@ -40,6 +40,9 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Codex AGENTS.md
+AGENTS.md
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import type { ApplicationFormData } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -25,8 +26,7 @@ import {
   TrendingUp,
   Briefcase,
   Filter,
-  RefreshCw,
-  Menu
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,6 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -373,8 +372,6 @@ export default function ApplicationsPage() {
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
-        isMobileOpen={isMobileNavOpen}
-        onMobileClose={() => setIsMobileNavOpen(false)}
       />
       <main
         className={cn(
@@ -383,35 +380,32 @@ export default function ApplicationsPage() {
         )}
       >
         <div className="container max-w-7xl py-6 sm:py-8">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden mt-1"
-                aria-label="Open menu"
-                onClick={() => setIsMobileNavOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-                  <Briefcase className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
-                  Job Applications
-                </h1>
-                <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-                  Track and manage your job applications
-                </p>
-              </div>
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3">
+            <div className="flex items-center">
+              <MobileNavDrawer />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-2">
+              <Briefcase className="h-6 w-6 text-muted-foreground sm:h-7 sm:w-7" />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">
+                Job Applications
+              </h1>
+            </div>
+            <div className="flex items-center justify-end">
               <ThemeToggle />
-              <Button size="lg" className="lg:h-9 sm:size-auto cursor-pointer" onClick={handleAddNew}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Application
-              </Button>
             </div>
+          </div>
+          <div className="mt-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground sm:text-base">
+              Track and manage your job applications
+            </p>
+            <Button
+              size="lg"
+              className="w-full cursor-pointer sm:w-auto lg:h-9"
+              onClick={handleAddNew}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Application
+            </Button>
           </div>
           {/* Filters */}
           <div className="mb-6 flex items-center gap-3 flex-wrap">
@@ -620,14 +614,6 @@ export default function ApplicationsPage() {
           variant="destructive"
         />
       </main>
-      {/* Mobile overlay */}
-      {isMobileNavOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setIsMobileNavOpen(false)}
-          aria-hidden
-        />
-      )}
     </div>
   );
 }

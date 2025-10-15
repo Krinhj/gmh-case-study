@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -508,23 +509,35 @@ export default function GeneratePage() {
   const isSaving = savingFormat !== null;
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="container max-w-7xl py-8">
-          <div className="space-y-6">
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
-              <div>
-                <h1 className="text-3xl font-bold">Generate Documents</h1>
-                <p className="text-muted-foreground mt-2">
-                  Create AI-tailored resumes and cover letters for your job applications
-                </p>
-              </div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+      />
+      <main
+        className={`ml-0 flex-1 overflow-x-hidden transition-all duration-300 ${
+          isCollapsed ? "md:ml-20" : "md:ml-64"
+        }`}
+      >
+        <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+            <div className="flex items-center">
+              <MobileNavDrawer triggerClassName="text-foreground" />
+            </div>
+            <h1 className="text-center text-2xl font-bold sm:text-3xl">Generate Documents</h1>
+            <div className="flex items-center justify-end">
               <ThemeToggle />
             </div>
           </div>
+        </div>
 
-        <Card>
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+            <p className="text-center text-sm text-muted-foreground sm:text-left sm:text-base">
+              Create AI-tailored resumes and cover letters for your job applications
+            </p>
+
+            <Card>
           <CardHeader>
             <CardTitle>Document Generator</CardTitle>
             <CardDescription>
@@ -534,7 +547,7 @@ export default function GeneratePage() {
           <CardContent className="space-y-6">
             {/* Application Selector */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label htmlFor="application-search">Job Application</Label>
                 <span className="text-xs text-muted-foreground">
                   Showing {visibleApplications} of {totalApplications} applications
@@ -764,92 +777,93 @@ export default function GeneratePage() {
               )}
             </Button>
           </CardContent>
-        </Card>
+            </Card>
 
-        {/* Preview Section */}
-        {generatedHtml && generatedDocumentType && (
-          <Card ref={previewRef}>
-            <CardHeader className="space-y-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <CardTitle>Document Preview</CardTitle>
-                  <CardDescription>
-                    Preview your generated {generatedDocumentType === "resume" ? "resume" : "cover letter"}
-                  </CardDescription>
-                </div>
-                <div className="flex flex-wrap justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDownload("pdf")}
-                    disabled={isPreviewStale}
-                    className="flex items-center"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDownload("docx")}
-                    disabled={isPreviewStale}
-                    className="flex items-center"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download DOCX
-                  </Button>
-                  <Button
-                    onClick={() => handleSave("pdf")}
-                    disabled={isSaving || isPreviewStale}
-                    className="flex items-center"
-                  >
-                    {savingFormat === "pdf" ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving PDF...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save PDF
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => handleSave("docx")}
-                    disabled={isSaving || isPreviewStale}
-                    className="flex items-center"
-                  >
-                    {savingFormat === "docx" ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving DOCX...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save DOCX
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-              {isPreviewStale && (
-                <div className="flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <span>
-                    You generated a {generatedDocumentType === "resume" ? "resume" : "cover letter"}. Regenerate to create a new {documentType === "resume" ? "resume" : "cover letter"} before downloading or saving.
-                  </span>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div
-                className="border rounded-lg p-8 bg-white"
-                dangerouslySetInnerHTML={{ __html: generatedHtml }}
-              />
-            </CardContent>
-          </Card>
-        )}
+            {/* Preview Section */}
+            {generatedHtml && generatedDocumentType && (
+              <Card ref={previewRef}>
+                <CardHeader className="space-y-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <CardTitle>Document Preview</CardTitle>
+                      <CardDescription>
+                        Preview your generated {generatedDocumentType === "resume" ? "resume" : "cover letter"}
+                      </CardDescription>
+                    </div>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDownload("pdf")}
+                        disabled={isPreviewStale}
+                        className="flex items-center"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download PDF
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDownload("docx")}
+                        disabled={isPreviewStale}
+                        className="flex items-center"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download DOCX
+                      </Button>
+                      <Button
+                        onClick={() => handleSave("pdf")}
+                        disabled={isSaving || isPreviewStale}
+                        className="flex items-center"
+                      >
+                        {savingFormat === "pdf" ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving PDF...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save PDF
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleSave("docx")}
+                        disabled={isSaving || isPreviewStale}
+                        className="flex items-center"
+                      >
+                        {savingFormat === "docx" ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving DOCX...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="mr-2 h-4 w-4" />
+                            Save DOCX
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  {isPreviewStale && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-600">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <span>
+                        You generated a {generatedDocumentType === "resume" ? "resume" : "cover letter"}. Regenerate to create a new {documentType === "resume" ? "resume" : "cover letter"} before downloading or saving.
+                      </span>
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <div
+                    className="min-w-full rounded-lg border bg-white p-6 sm:p-8"
+                    dangerouslySetInnerHTML={{ __html: generatedHtml }}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
+        </div>
       </main>
     </div>
   );
