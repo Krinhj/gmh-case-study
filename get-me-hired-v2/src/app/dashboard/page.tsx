@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHelpers } from "@/lib/auth";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RecentApplications } from "@/components/dashboard/recent-applications";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardProvider } from "@/contexts/dashboard-context";
 
@@ -17,7 +16,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useEffect(() => {
     // Check authentication
@@ -54,8 +52,6 @@ export default function DashboardPage() {
         <Sidebar
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}
-          isMobileOpen={isMobileNavOpen}
-          onMobileClose={() => setIsMobileNavOpen(false)}
         />
 
         {/* Main Content */}
@@ -71,15 +67,7 @@ export default function DashboardPage() {
           <div className="border-b bg-background sticky top-0 z-10">
             <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
               <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden"
-                  onClick={() => setIsMobileNavOpen(true)}
-                  aria-label="Open menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
+                <MobileNavDrawer />
               </div>
               <h1 className="text-center text-2xl font-bold sm:text-3xl">Dashboard</h1>
               <div className="flex items-center justify-end">
@@ -103,14 +91,6 @@ export default function DashboardPage() {
             <RecentApplications />
           </div>
         </main>
-        {/* Mobile overlay */}
-        {isMobileNavOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-black/40 md:hidden"
-            onClick={() => setIsMobileNavOpen(false)}
-            aria-hidden
-          />
-        )}
       </div>
     </DashboardProvider>
   );

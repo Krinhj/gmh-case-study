@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,6 @@ import {
   AlertTriangle,
   Check,
   Search,
-  Menu,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -109,7 +109,6 @@ export default function GeneratePage() {
   const [isPreviewStale, setIsPreviewStale] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const fetchApplications = useCallback(async () => {
@@ -514,8 +513,6 @@ export default function GeneratePage() {
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
-        isMobileOpen={isMobileNavOpen}
-        onMobileClose={() => setIsMobileNavOpen(false)}
       />
       <main
         className={`ml-0 flex-1 overflow-x-hidden transition-all duration-300 ${
@@ -525,15 +522,7 @@ export default function GeneratePage() {
         <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
           <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden text-foreground"
-                onClick={() => setIsMobileNavOpen(true)}
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <MobileNavDrawer triggerClassName="text-foreground" />
             </div>
             <h1 className="text-center text-2xl font-bold sm:text-3xl">Generate Documents</h1>
             <div className="flex items-center justify-end">
@@ -876,13 +865,6 @@ export default function GeneratePage() {
           </div>
         </div>
       </main>
-      {isMobileNavOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setIsMobileNavOpen(false)}
-          aria-hidden
-        />
-      )}
     </div>
   );
 }

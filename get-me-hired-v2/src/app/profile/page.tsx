@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -32,8 +33,7 @@ import {
   Award,
   Plus,
   Trash2,
-  Calendar,
-  Menu
+  Calendar
 } from "lucide-react";
 import { useProfile } from "@/contexts/profile-context";
 import {
@@ -136,7 +136,6 @@ export default function ProfilePage() {
   const { profileData: cachedProfile, isLoading: contextLoading, updateProfileData } = useProfile();
   const [isSaving, setIsSaving] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("personal");
@@ -894,8 +893,6 @@ export default function ProfilePage() {
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
-        isMobileOpen={isMobileNavOpen}
-        onMobileClose={() => setIsMobileNavOpen(false)}
       />
       <main
         className={`ml-0 flex-1 overflow-x-hidden transition-all duration-300 ${isCollapsed ? "md:ml-20" : "md:ml-64"}`}
@@ -903,15 +900,7 @@ export default function ProfilePage() {
         <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75">
           <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden text-foreground"
-                onClick={() => setIsMobileNavOpen(true)}
-                aria-label="Open navigation menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <MobileNavDrawer triggerClassName="text-foreground" />
             </div>
             <h1 className="text-center text-2xl font-bold sm:text-3xl">Profile</h1>
             <div className="flex items-center justify-end">
@@ -1180,24 +1169,29 @@ export default function ProfilePage() {
             {/* Experience Tab */}
             <TabsContent value="experience">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Work Experience</h2>
                     <p className="text-muted-foreground mt-1">
                       Add your professional work history
                     </p>
                   </div>
-                  <Button onClick={handleAddExperience}>
+                  <Button onClick={handleAddExperience} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Experience
                   </Button>
                 </div>
 
                 {experiences.length === 0 ? (
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No work experience added yet</p>
+                  <Card className="border-dashed border-border/70 bg-muted/10">
+                    <CardContent className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                      <Briefcase className="h-10 w-10 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">No work experience added yet</p>
+                        <p className="text-sm text-muted-foreground">
+                          Add your first role to showcase your professional background.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 ) : (
@@ -1292,14 +1286,14 @@ export default function ProfilePage() {
             {/* Education Tab */}
             <TabsContent value="education">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Education</h2>
                     <p className="text-muted-foreground mt-1">
                       Add your educational background
                     </p>
                   </div>
-                  <Button onClick={handleAddEducation}>
+                  <Button onClick={handleAddEducation} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Education
                   </Button>
@@ -1402,14 +1396,14 @@ export default function ProfilePage() {
             {/* Projects Tab */}
             <TabsContent value="projects">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Projects</h2>
                     <p className="text-muted-foreground mt-1">
                       Showcase your personal and professional projects
                     </p>
                   </div>
-                  <Button onClick={handleAddProject}>
+                  <Button onClick={handleAddProject} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Project
                   </Button>
@@ -1529,14 +1523,14 @@ export default function ProfilePage() {
             {/* Skills Tab */}
             <TabsContent value="skills">
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-bold">Skills</h2>
                     <p className="text-muted-foreground mt-1">
                       Add your technical and professional skills
                     </p>
                   </div>
-                  <Button onClick={handleAddSkill}>
+                  <Button onClick={handleAddSkill} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Skill
                   </Button>
@@ -1603,13 +1597,6 @@ export default function ProfilePage() {
         </div>
       </div>
       </main>
-      {isMobileNavOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setIsMobileNavOpen(false)}
-          aria-hidden
-        />
-      )}
       {/* Experience Dialog */}
       <Dialog open={showExperienceDialog} onOpenChange={setShowExperienceDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

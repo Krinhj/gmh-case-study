@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import type { ApplicationFormData } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils";
 import {
   Loader2,
   Building2,
@@ -291,10 +294,25 @@ export default function ApplicationViewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex min-h-screen bg-background">
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="flex items-center justify-center h-full">
+        <main
+          className={cn(
+            "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+            isCollapsed ? "md:ml-20" : "md:ml-64"
+          )}
+        >
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+              <MobileNavDrawer />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">Application Details</h1>
+              <div className="flex justify-end">
+                <ThemeToggle />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex min-h-[50vh] items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         </main>
@@ -304,11 +322,26 @@ export default function ApplicationViewPage() {
 
   if (!application) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex min-h-screen bg-background">
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="flex items-center justify-center h-full">
-            <p>Application not found</p>
+        <main
+          className={cn(
+            "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+            isCollapsed ? "md:ml-20" : "md:ml-64"
+          )}
+        >
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+              <MobileNavDrawer />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">Application Details</h1>
+              <div className="flex justify-end">
+                <ThemeToggle />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex min-h-[50vh] items-center justify-center p-6">
+            <p className="text-sm text-muted-foreground">Application not found.</p>
           </div>
         </main>
       </div>
@@ -316,277 +349,295 @@ export default function ApplicationViewPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="container max-w-5xl py-8">
-          {/* Header */}
-          <div className="mb-8">
+      <main
+        className={cn(
+          "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+          isCollapsed ? "md:ml-20" : "md:ml-64"
+        )}
+      >
+        <div className="border-b bg-background sticky top-0 z-10">
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+            <MobileNavDrawer />
+            <h1 className="text-center text-2xl font-bold sm:text-3xl">Application Details</h1>
+            <div className="flex justify-end">
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+        <div className="p-4 sm:p-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/applications")}
-              className="mb-4"
+              className="w-full justify-center sm:w-fit sm:justify-start"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Applications
             </Button>
 
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold">{application.role}</h1>
-                  <Badge
-                    variant="outline"
-                    className={statusConfig[application.status].color}
-                  >
-                    {statusConfig[application.status].label}
-                  </Badge>
+            <div className="rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-2xl font-semibold sm:text-3xl">{application.role}</h2>
+                    <Badge
+                      variant="outline"
+                      className={statusConfig[application.status].color}
+                    >
+                      {statusConfig[application.status].label}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
+                    <Building2 className="h-4 w-4" />
+                    <span>{application.company}</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-4 w-4" />
-                  <span className="text-lg">{application.company}</span>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                >
-                  <Link href={`/applications/${application.id}/documents`}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Documents
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDialogOpen(true)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeleteConfirmOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="w-full justify-center sm:w-auto sm:justify-start"
+                  >
+                    <Link href={`/applications/${application.id}/documents`}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      View Documents
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDialogOpen(true)}
+                    className="w-full justify-center sm:w-auto sm:justify-start"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    className="w-full justify-center sm:w-auto sm:justify-start text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Application Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Date Applied
-                    </label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-base">{formatDate(application.date_applied)}</p>
-                    </div>
-                  </div>
-
-                  {application.match_score !== null && (
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5" />
+                    Application Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        Match Score
+                        Date Applied
                       </label>
-                      <div className="flex items-center gap-3 mt-1">
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <Badge
-                              variant="outline"
-                              className={getMatchScoreBadgeColor(application.match_score)}
-                            >
-                              {application.match_score}%
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setInsightsDialogOpen(true)}
-                            >
-                              <Info className="mr-2 h-3 w-3" />
-                              View Insights
-                            </Button>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all ${getMatchScoreColor(application.match_score)}`}
-                              style={{ width: `${application.match_score}%` }}
-                            />
+                      <div className="mt-1 flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-base">{formatDate(application.date_applied)}</p>
+                      </div>
+                    </div>
+
+                    {application.match_score !== null && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Match Score
+                        </label>
+                        <div className="mt-1 flex items-center gap-3">
+                          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1">
+                            <div className="mb-1 flex items-center justify-between">
+                              <Badge
+                                variant="outline"
+                                className={getMatchScoreBadgeColor(application.match_score)}
+                              >
+                                {application.match_score}%
+                              </Badge>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setInsightsDialogOpen(true)}
+                              >
+                                <Info className="mr-2 h-3 w-3" />
+                                View Insights
+                              </Button>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className={`h-full transition-all ${getMatchScoreColor(application.match_score)}`}
+                                style={{ width: `${application.match_score}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Additional Details Grid */}
-                <div className="grid gap-4 md:grid-cols-3 pt-4 border-t">
-                  {application.location && (
+                  {/* Additional Details Grid */}
+                  <div className="grid gap-4 border-t pt-4 md:grid-cols-3">
+                    {application.location && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Location
+                        </label>
+                        <p className="mt-1 text-base">{application.location}</p>
+                      </div>
+                    )}
+
+                    {application.work_mode && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Work Mode
+                        </label>
+                        <p className="mt-1 text-base capitalize">{application.work_mode}</p>
+                      </div>
+                    )}
+
+                    {application.industry && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Industry
+                        </label>
+                        <p className="mt-1 text-base">{application.industry}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {application.job_posting_url && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        Location
+                        Job Posting
                       </label>
-                      <p className="text-base mt-1">{application.location}</p>
-                    </div>
-                  )}
-
-                  {application.work_mode && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Work Mode
-                      </label>
-                      <p className="text-base mt-1 capitalize">{application.work_mode}</p>
-                    </div>
-                  )}
-
-                  {application.industry && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Industry
-                      </label>
-                      <p className="text-base mt-1">{application.industry}</p>
-                    </div>
-                  )}
-                </div>
-
-                {application.job_posting_url && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Job Posting
-                    </label>
-                    <div className="mt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                      >
-                        <a
-                          href={application.job_posting_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      <div className="mt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
                         >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View Original Posting
-                        </a>
-                      </Button>
+                          <a
+                            href={application.job_posting_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            View Original Posting
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Job Description */}
-            {application.job_description && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Job Description
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {application.job_description}
-                    </pre>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
 
-            {/* Requirements */}
-            {application.job_requirements && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Requirements & Qualifications
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {application.job_requirements}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Job Description */}
+              {application.job_description && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Job Description
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {application.job_description}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Responsibilities */}
-            {application.job_responsibilities && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Responsibilities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {application.job_responsibilities}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Requirements */}
+              {application.job_requirements && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Requirements & Qualifications
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {application.job_requirements}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Benefits */}
-            {application.benefits && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Benefits & Perks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {application.benefits}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Responsibilities */}
+              {application.job_responsibilities && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Responsibilities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {application.job_responsibilities}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Notes */}
-            {application.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <StickyNote className="h-5 w-5" />
-                    Notes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {application.notes}
-                    </pre>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Benefits */}
+              {application.benefits && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Benefits & Perks
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {application.benefits}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Notes */}
+              {application.notes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <StickyNote className="h-5 w-5" />
+                      Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {application.notes}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
 
@@ -620,7 +671,7 @@ export default function ApplicationViewPage() {
             userId={userId}
             currentMatchScore={application.match_score || 0}
             initialInsights={application.match_insights}
-            onInsightsUpdate={(latest) =>
+            onInsightsUpdate={(latest) => {
               setApplication((prev) =>
                 prev
                   ? {
@@ -629,8 +680,8 @@ export default function ApplicationViewPage() {
                       match_score: latest.match_score,
                     }
                   : prev
-              )
-            }
+              );
+            }}
           />
         )}
       </main>

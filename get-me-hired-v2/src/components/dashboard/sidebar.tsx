@@ -5,27 +5,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, Sparkles, User, LogOut, X } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { authHelpers } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/applications", label: "Applications", icon: Briefcase },
-  { href: "/generate", label: "Generate", icon: Sparkles },
-  { href: "/profile", label: "Profile", icon: User },
-];
+import { NAV_ITEMS } from "./nav-items";
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
-  isMobileOpen?: boolean;
-  onMobileClose?: () => void;
 }
 
-export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
@@ -46,12 +39,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen = false, onM
     setIsCollapsed(!isCollapsed);
   };
 
-  const baseClasses = "fixed left-0 top-0 h-screen border-r bg-card flex flex-col transition-transform duration-300 z-40";
-  const transformClasses = isMobileOpen ? "translate-x-0" : "-translate-x-full";
+  const baseClasses =
+    "hidden md:flex md:fixed md:left-0 md:top-0 h-screen border-r bg-card flex-col transition-[width] duration-300 z-40";
   const widthClasses = isCollapsed ? "md:w-20" : "md:w-64";
 
   return (
-    <aside className={`${baseClasses} w-64 md:translate-x-0 ${transformClasses} ${widthClasses}`}>
+    <aside className={`${baseClasses} ${widthClasses}`}>
       {/* Logo */}
       <div className="p-6 border-b relative">
         <button
@@ -67,21 +60,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen = false, onM
           />
           {!isCollapsed && <span className="text-xl font-bold">GetMeHired</span>}
         </button>
-        {/* Close button for mobile */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-2 top-2 md:hidden"
-          onClick={onMobileClose}
-          aria-label="Close menu"
-        >
-          <X className="h-5 w-5" />
-        </Button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           const linkClasses = cn(

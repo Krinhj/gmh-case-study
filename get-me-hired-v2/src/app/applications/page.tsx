@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { ApplicationDialog } from "@/components/applications/application-dialog";
 import type { ApplicationFormData } from "@/components/applications/application-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -25,8 +26,7 @@ import {
   TrendingUp,
   Briefcase,
   Filter,
-  RefreshCw,
-  Menu
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +60,6 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -373,8 +372,6 @@ export default function ApplicationsPage() {
       <Sidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
-        isMobileOpen={isMobileNavOpen}
-        onMobileClose={() => setIsMobileNavOpen(false)}
       />
       <main
         className={cn(
@@ -385,15 +382,7 @@ export default function ApplicationsPage() {
         <div className="container max-w-7xl py-6 sm:py-8">
           <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                aria-label="Open menu"
-                onClick={() => setIsMobileNavOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <MobileNavDrawer />
             </div>
             <div className="flex items-center justify-center gap-2">
               <Briefcase className="h-6 w-6 text-muted-foreground sm:h-7 sm:w-7" />
@@ -625,14 +614,6 @@ export default function ApplicationsPage() {
           variant="destructive"
         />
       </main>
-      {/* Mobile overlay */}
-      {isMobileNavOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
-          onClick={() => setIsMobileNavOpen(false)}
-          aria-hidden
-        />
-      )}
     </div>
   );
 }

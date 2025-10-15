@@ -5,6 +5,7 @@ import type { ElementType } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { authHelpers } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Download,
@@ -174,7 +176,7 @@ export default function ApplicationDocumentsPage() {
 
     return (
       <Card>
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Icon className="h-5 w-5" />
@@ -186,7 +188,7 @@ export default function ApplicationDocumentsPage() {
             {items.length} saved
           </Badge>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4 sm:p-6">
           {items.length === 0 ? (
             <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-border/60 bg-muted/30 p-6 text-sm text-muted-foreground">
               <p>No documents available yet.</p>
@@ -202,13 +204,20 @@ export default function ApplicationDocumentsPage() {
               {items.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/80 p-4"
+                  className="flex flex-col gap-3 rounded-lg border border-border/60 bg-card/80 p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="space-y-1">
                     <p className="font-medium leading-tight">{formatDateTime(doc.generated_at)}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{getFileName(doc.file_path)}</p>
+                    <p className="text-sm text-muted-foreground break-words sm:max-w-sm">
+                      {getFileName(doc.file_path)}
+                    </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload(doc)}
+                    className="w-full sm:w-auto"
+                  >
                     <Download className="mr-2 h-4 w-4" />
                     Download
                   </Button>
@@ -223,10 +232,24 @@ export default function ApplicationDocumentsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex min-h-screen bg-background">
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="flex h-full items-center justify-center">
+        <main
+          className={cn(
+            "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+            isCollapsed ? "md:ml-20" : "md:ml-64"
+          )}
+        >
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+              <MobileNavDrawer />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">Generated Documents</h1>
+              <div className="flex justify-end">
+                <ThemeToggle />
+              </div>
+            </div>
+          </div>
+          <div className="flex min-h-[50vh] items-center justify-center p-6">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         </main>
@@ -236,10 +259,24 @@ export default function ApplicationDocumentsPage() {
 
   if (!application) {
     return (
-      <div className="flex h-screen bg-background">
+      <div className="flex min-h-screen bg-background">
         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="flex h-full items-center justify-center">
+        <main
+          className={cn(
+            "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+            isCollapsed ? "md:ml-20" : "md:ml-64"
+          )}
+        >
+          <div className="border-b bg-background sticky top-0 z-10">
+            <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+              <MobileNavDrawer />
+              <h1 className="text-center text-2xl font-bold sm:text-3xl">Generated Documents</h1>
+              <div className="flex justify-end">
+                <ThemeToggle />
+              </div>
+            </div>
+          </div>
+          <div className="flex min-h-[50vh] items-center justify-center p-6">
             <p className="text-sm text-muted-foreground">Application not found.</p>
           </div>
         </main>
@@ -248,51 +285,75 @@ export default function ApplicationDocumentsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="container max-w-5xl py-8 space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/applications/${application.id}`)}
-                className="mb-4"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Application
-              </Button>
-              <h1 className="text-3xl font-bold leading-tight">Generated Documents</h1>
-              <p className="text-muted-foreground mt-2">
-                Saved resumes and cover letters created for {application.role} at {application.company}.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
+      <main
+        className={cn(
+          "flex-1 overflow-y-auto transition-all duration-300 ml-0",
+          isCollapsed ? "md:ml-20" : "md:ml-64"
+        )}
+      >
+        <div className="border-b bg-background sticky top-0 z-10">
+          <div className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 p-4 sm:p-6">
+            <MobileNavDrawer />
+            <h1 className="text-center text-2xl font-bold sm:text-3xl">Generated Documents</h1>
+            <div className="flex justify-end">
               <ThemeToggle />
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/generate">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate New Document
-                </Link>
-              </Button>
             </div>
           </div>
-          {renderDocumentSection(
-            "Resumes",
-            "AI-tailored resumes you've generated for this application.",
-            resumes,
-            FileText,
-            "Generate a Resume"
-          )}
+        </div>
 
-          {renderDocumentSection(
-            "Cover Letters",
-            "Personalized cover letters saved for this role.",
-            coverLetters,
-            PenLine,
-            "Generate a Cover Letter"
-          )}
+        <div className="p-4 sm:p-6">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/applications/${application.id}`)}
+              className="w-full justify-center sm:w-fit sm:justify-start"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Application
+            </Button>
+
+            <div className="rounded-xl border border-border/60 bg-card/80 p-4 shadow-sm sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm uppercase tracking-wide text-muted-foreground">Current Role</p>
+                  <h2 className="text-2xl font-semibold sm:text-3xl">{application.role}</h2>
+                  <p className="text-sm text-muted-foreground sm:text-base">{application.company}</p>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="w-full justify-center sm:w-auto sm:justify-start"
+                  >
+                    <Link href="/generate">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate New Document
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {renderDocumentSection(
+              "Resumes",
+              "AI-tailored resumes you've generated for this application.",
+              resumes,
+              FileText,
+              "Generate a Resume"
+            )}
+
+            {renderDocumentSection(
+              "Cover Letters",
+              "Personalized cover letters saved for this role.",
+              coverLetters,
+              PenLine,
+              "Generate a Cover Letter"
+            )}
+          </div>
         </div>
       </main>
     </div>
